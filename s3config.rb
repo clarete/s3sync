@@ -23,5 +23,5 @@ module S3Config
       break
     end
   end
-    
+  
 end
