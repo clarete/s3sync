@@ -14,6 +14,7 @@
 # to the underlying lib this stuff will need updating.
 
 require 'net/http'
+require 'delegate'
 
 module Net
 
