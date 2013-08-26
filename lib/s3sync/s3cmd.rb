@@ -240,5 +240,3 @@ end #module
 def debug(str)
   $stderr.puts str if $S3syncOptions['--debug']
 end
-
-S3sync::s3cmdMain #go!

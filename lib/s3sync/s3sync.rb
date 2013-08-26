@@ -730,6 +730,3 @@ def ostats(last_stat = nil)
 
   stats
 end
-
-# go!
-S3sync::main
