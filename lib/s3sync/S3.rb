@@ -105,7 +105,7 @@ module S3
     digest = OpenSSL::Digest::Digest.new('sha1')
     b64_hmac =
       Base64.encode64(
-        OpenSSL::HMAC.digest(digest, aws_secret_access_key, str)).strip
+                      OpenSSL::HMAC.digest(digest, aws_secret_access_key, str)).strip
 
     if urlencode
       return CGI::escape(b64_hmac)
@@ -145,7 +145,7 @@ module S3
       @is_secure = is_secure
       @calling_format = calling_format
       @port = port
-end
+    end
 
     def create_bucket(bucket, headers={})
       return Response.new(make_request('PUT', bucket, '', {}, headers))
@@ -155,7 +155,7 @@ end
     def list_bucket(bucket, options={}, headers={})
       path_args = {}
       options.each { |k, v|
-          path_args[k] = v.to_s
+        path_args[k] = v.to_s
       }
 
       return ListBucketResponse.new(make_request('GET', bucket, '', path_args, headers))
@@ -169,8 +169,8 @@ end
       object = S3Object.new(object) if not object.instance_of? S3Object
 
       return Response.new(
-        make_request('PUT', bucket, CGI::escape(key), {}, headers, object.data, object.metadata)
-      )
+                          make_request('PUT', bucket, CGI::escape(key), {}, headers, object.data, object.metadata)
+                          )
     end
 
     def get(bucket, key, headers={})
@@ -211,8 +211,8 @@ end
     # be a string in the acl xml format.
     def put_acl(bucket, key, acl_xml_doc, headers={})
       return Response.new(
-        make_request('PUT', bucket, CGI::escape(key), {'acl' => nil}, headers, acl_xml_doc, {})
-      )
+                          make_request('PUT', bucket, CGI::escape(key), {'acl' => nil}, headers, acl_xml_doc, {})
+                          )
     end
 
     def list_all_my_buckets(headers={})
@@ -579,7 +579,7 @@ end
     end
 
     def text(text)
-        @curr_text += text
+      @curr_text += text
     end
 
     def xmldecl(version, encoding, standalone)
@@ -628,7 +628,7 @@ end
     end
 
     def text(text)
-        @curr_text += text
+      @curr_text += text
     end
 
     def xmldecl(version, encoding, standalone)

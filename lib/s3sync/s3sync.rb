@@ -264,7 +264,7 @@ ENDUSAGE
 
     # a generator that will return the nodes in the S3 tree one by one
     # sorted and decorated for easy comparison with the local tree
-		s3Tree = Generator.new do |g|
+    s3Tree = Generator.new do |g|
       def S3sync.s3TreeRecurse(g, bucket, prefix, path)
         if $S3syncOptions['--memory']
           $stderr.puts "Starting S3 recurse"

@@ -178,4 +178,3 @@ module S3sync
   end
 
 end #module
-
