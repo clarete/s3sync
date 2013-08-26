@@ -14,7 +14,6 @@
 # to the underlying lib this stuff will need updating.
 
 require 'cgi'
-require 'iconv' # for UTF-8 conversion
 
 # thanks to http://www.redhillconsulting.com.au/blogs/simon/archives/000326.html
 module S3ExtendCGI
@@ -39,7 +38,7 @@ module S3ExtendCGI
     
     def S3Extend_escape(string)
       result = string
-      result = Iconv.iconv("UTF-8", @nativeCharacterEncoding, string).join if @useUTF8InEscape 
+      result = S3sync::utf8(string, @nativeCharacterEncoding) if @useUTF8InEscape 
       result = S3Extend_escape_orig(result)
       result.gsub!(/%2f/i, "/") if @exemptSlashesInEscape
       result.gsub!("+", "%20") if @usePercent20InEscape

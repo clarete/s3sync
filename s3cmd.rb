@@ -109,14 +109,14 @@ ENDUSAGE
               res = s3cmdList(bucket, path, nil, nil, marker)
               res.entries.each do |item|
                 # the s3 commands (with my modified UTF-8 conversion) expect native char encoding input
-                key = Iconv.iconv($S3SYNC_NATIVE_CHARSET, "UTF-8", item.key).join
+                key = utf8(item.key)
                 $stderr.puts "delete #{bucket}:#{key} #{headers.inspect if headers}" if $S3syncOptions['--verbose']
                 S3try(:delete, bucket, key) unless $S3syncOptions['--dryrun']		
               end
               more = res.properties.is_truncated
               marker = (res.properties.next_marker)? res.properties.next_marker : ((res.entries.length > 0) ? res.entries.last.key : nil)
               # get this into local charset; when we pass it to s3 that is what's expected
-              marker = Iconv.iconv($S3SYNC_NATIVE_CHARSET, "UTF-8", marker).join if marker
+              marker = utf8(marker) if marker
             end
           when "list"
             s3cmdUsage("Need a bucket") if bucket == ''
@@ -132,19 +132,19 @@ ENDUSAGE
               if delim
                 res.common_prefix_entries.each do |item|
                   
-                  puts "dir: " + Iconv.iconv($S3SYNC_NATIVE_CHARSET, "UTF-8", item.prefix).join
+                  puts "dir: " + utf8(item.prefix)
                 end
                 puts "--------------------"
               end
               res.entries.each do |item|
-                puts Iconv.iconv($S3SYNC_NATIVE_CHARSET, "UTF-8", item.key).join
+                puts utf8(item.key)
               end
               if res.properties.is_truncated
                 printf "More? Y/n: "
                 more = (STDIN.gets.match('^[Yy]?$'))
                 marker = (res.properties.next_marker)? res.properties.next_marker : ((res.entries.length > 0) ? res.entries.last.key : nil)
                 # get this into local charset; when we pass it to s3 that is what's expected
-                marker = Iconv.iconv($S3SYNC_NATIVE_CHARSET, "UTF-8", marker).join if marker
+                marker = utf8(marker) if marker
 						
               else
                 more = false

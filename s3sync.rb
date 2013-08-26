@@ -297,16 +297,16 @@ ENDUSAGE
           # get rid of the big s3 objects asap, just save light-weight nodes and strings
           items = tItems.collect do |item|
             if item.respond_to?('key')
-              key = Iconv.iconv($S3SYNC_NATIVE_CHARSET, "UTF-8", item.key).join
+              key = utf8(item.key)
               Node.new(key, item.size, item.etag, item.last_modified)
             else
-              Iconv.iconv($S3SYNC_NATIVE_CHARSET, "UTF-8", item.prefix).join
+              utf8(item.prefix)
             end
           end
           nextPage = d.properties.is_truncated
           marker = (d.properties.next_marker)? d.properties.next_marker : ((d.entries.length > 0)? d.entries.last.key : '')
           # get this into native char set (because when we feed it back to s3 that's what it will expect)
-          marker = Iconv.iconv($S3SYNC_NATIVE_CHARSET, "UTF-8", marker).join
+          marker = utf8(marker)
           tItems = nil
           d = nil # get rid of this before recursing; it's big
           item = nil
