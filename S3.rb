@@ -78,7 +78,7 @@ module S3
     if not bucket.empty?
       buf << "/#{bucket}"
     end
-    # append the key (it might be empty string) 
+    # append the key (it might be empty string)
     # append a slash regardless
     buf << "/#{path}"
 
@@ -135,7 +135,7 @@ module S3
   # some connection pooling.
   class AWSAuthConnection
     attr_accessor :calling_format
-    
+
     def initialize(aws_access_key_id, aws_secret_access_key, is_secure=true,
                    server=DEFAULT_HOST, port=PORTS_BY_SECURITY[is_secure],
                    calling_format=CallingFormat::REGULAR)
@@ -184,7 +184,7 @@ end
     def head(bucket, key, headers={})
       return GetResponse.new(make_request('HEAD', bucket, CGI::escape(key), {}, headers))
     end
-    
+
     def get_bucket_logging(bucket, headers={})
       return GetResponse.new(make_request('GET', bucket, '', {'logging' => nil}, headers))
     end
@@ -221,7 +221,7 @@ end
 
     private
     def make_request(method, bucket='', key='', path_args={}, headers={}, data='', metadata={})
-      
+
       # build the domain based on the calling format
       server = ''
       if bucket.empty?
@@ -230,9 +230,9 @@ end
         # does not make sense for vanity domains
         server = @server
       elsif @calling_format == CallingFormat::SUBDOMAIN
-        server = "#{bucket}.#{@server}" 
+        server = "#{bucket}.#{@server}"
       elsif @calling_format == CallingFormat::VANITY
-        server = bucket 
+        server = bucket
       else
         server = @server
       end
@@ -247,11 +247,11 @@ end
       path << "/#{key}"
 
       # build the path_argument string
-      # add the ? in all cases since 
+      # add the ? in all cases since
       # signature and credentials follow path args
       path << '?'
-      path << S3.path_args_hash_to_string(path_args) 
-      
+      path << S3.path_args_hash_to_string(path_args)
+
       http = Net::HTTP.new(server, @port)
       http.use_ssl = @is_secure
       http.start do
@@ -278,7 +278,7 @@ end
       when 'DELETE'
         return Net::HTTP::Delete
       when 'HEAD'
-        return Net::HTTP::Head        
+        return Net::HTTP::Head
       else
         raise "Unsupported method #{method}"
       end
@@ -324,15 +324,15 @@ end
     # by default, expire in 1 minute
     DEFAULT_EXPIRES_IN = 60
 
-    def initialize(aws_access_key_id, aws_secret_access_key, is_secure=true, 
-                   server=DEFAULT_HOST, port=PORTS_BY_SECURITY[is_secure], 
+    def initialize(aws_access_key_id, aws_secret_access_key, is_secure=true,
+                   server=DEFAULT_HOST, port=PORTS_BY_SECURITY[is_secure],
                    format=CallingFormat::REGULAR)
       @aws_access_key_id = aws_access_key_id
       @aws_secret_access_key = aws_secret_access_key
       @protocol = is_secure ? 'https' : 'http'
       @server = server
       @port = port
-      @calling_format = format 
+      @calling_format = format
       # by default expire
       @expires_in = DEFAULT_EXPIRES_IN
     end
@@ -432,13 +432,13 @@ end
         S3::canonical_string(method, bucket, key, path_args, headers, expires)
       encoded_canonical =
         S3::encode(@aws_secret_access_key, canonical_string)
-      
+
       url = CallingFormat.build_url_base(@protocol, @server, @port, bucket, @calling_format)
 
       path_args["Signature"] = encoded_canonical.to_s
       path_args["Expires"] = expires.to_s
       path_args["AWSAccessKeyId"] = @aws_access_key_id.to_s
-      arg_string = S3.path_args_hash_to_string(path_args) 
+      arg_string = S3.path_args_hash_to_string(path_args)
 
       return "#{url}/#{key}?#{arg_string}"
     end
@@ -463,7 +463,7 @@ end
   end
 
   # class for storing calling format constants
-  module CallingFormat 
+  module CallingFormat
     REGULAR   = 0 # http://s3.amazonaws.com/bucket/key
     SUBDOMAIN = 1 # http://bucket.s3.amazonaws.com/key
     VANITY    = 2  # http://<vanity_domain>/key  -- vanity_domain resolves to s3.amazonaws.com
@@ -480,7 +480,7 @@ end
       else
         build_url_base << "#{server}:#{port}/#{bucket}"
       end
-      return build_url_base 
+      return build_url_base
     end
   end
 
@@ -541,7 +541,7 @@ end
       if name == 'Name'
         @properties.name = @curr_text
       elsif name == 'Prefix' and @is_echoed_prefix
-        @properties.prefix = @curr_text       
+        @properties.prefix = @curr_text
         @is_echoed_prefix = nil
       elsif name == 'Marker'
         @properties.marker = @curr_text
@@ -551,7 +551,7 @@ end
         @properties.delimiter = @curr_text
       elsif name == 'IsTruncated'
         @properties.is_truncated = @curr_text == 'true'
-      elsif name == 'NextMarker'        
+      elsif name == 'NextMarker'
         @properties.next_marker = @curr_text
       elsif name == 'Contents'
         @entries << @curr_entry
@@ -570,7 +570,7 @@ end
       elsif name == 'DisplayName'
         @curr_entry.owner.display_name = @curr_text
       elsif name == 'CommonPrefixes'
-        @common_prefixes << @common_prefix_entry         
+        @common_prefixes << @common_prefix_entry
       elsif name == 'Prefix'
         # this is the common prefix for keys that match up to the delimiter
         @common_prefix_entry.prefix = @curr_text

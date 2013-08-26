@@ -1,16 +1,16 @@
-#!/usr/bin/env ruby 
-# This software code is made available "AS IS" without warranties of any        
-# kind.  You may copy, display, modify and redistribute the software            
-# code either by itself or as incorporated into your code; provided that        
-# you do not remove any proprietary notices.  Your use of this software         
+#!/usr/bin/env ruby
+# This software code is made available "AS IS" without warranties of any
+# kind.  You may copy, display, modify and redistribute the software
+# code either by itself or as incorporated into your code; provided that
+# you do not remove any proprietary notices.  Your use of this software
 # code is at your own risk and you waive any claim against the author
-# with respect to your use of this software code. 
+# with respect to your use of this software code.
 # (c) 2007 s3sync.net
 #
 module S3sync
-  
-  $AWS_ACCESS_KEY_ID = ENV["AWS_ACCESS_KEY_ID"]           
-  $AWS_SECRET_ACCESS_KEY = ENV["AWS_SECRET_ACCESS_KEY"]   
+
+  $AWS_ACCESS_KEY_ID = ENV["AWS_ACCESS_KEY_ID"]
+  $AWS_SECRET_ACCESS_KEY = ENV["AWS_SECRET_ACCESS_KEY"]
   $AWS_S3_HOST = (ENV["AWS_S3_HOST"] or "s3.amazonaws.com")
   $HTTP_PROXY_HOST = ENV["HTTP_PROXY_HOST"]
   $HTTP_PROXY_PORT = ENV["HTTP_PROXY_PORT"]
@@ -18,13 +18,13 @@ module S3sync
   $HTTP_PROXY_PASSWORD = ENV["HTTP_PROXY_PASSWORD"]
   $SSL_CERT_DIR = ENV["SSL_CERT_DIR"]
   $SSL_CERT_FILE = ENV["SSL_CERT_FILE"]
-  $S3SYNC_RETRIES = (ENV["S3SYNC_RETRIES"] or 100).to_i # number of errors to tolerate 
+  $S3SYNC_RETRIES = (ENV["S3SYNC_RETRIES"] or 100).to_i # number of errors to tolerate
   $S3SYNC_WAITONERROR = (ENV["S3SYNC_WAITONERROR"] or 30).to_i # seconds
   $S3SYNC_NATIVE_CHARSET = (ENV["S3SYNC_NATIVE_CHARSET"] or "ISO-8859-1")
   $AWS_CALLING_FORMAT = (ENV["AWS_CALLING_FORMAT"] or "REGULAR")
-  
+
   require 'S3'
-  
+
   require 'HTTPStreaming'
   require 'S3encoder'
   CGI::exemptSlashesInEscape = true
@@ -32,14 +32,14 @@ module S3sync
   CGI::useUTF8InEscape = true
   CGI::nativeCharacterEncoding = $S3SYNC_NATIVE_CHARSET
   require 'S3_s3sync_mod'
-  
-  
+
+
   $S3syncRetriesLeft = $S3SYNC_RETRIES.to_i
-  
-  def S3sync.s3trySetup 	
-    
+
+  def S3sync.s3trySetup
+
     # ---------- CONNECT ---------- #
-    
+
     $S3syncConnection = S3::AWSAuthConnection.new($AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY, $S3syncOptions['--ssl'], $AWS_S3_HOST)
     $S3syncConnection.calling_format = S3::CallingFormat::string_to_format($AWS_CALLING_FORMAT)
     if $S3syncOptions['--ssl']
@@ -52,16 +52,16 @@ module S3sync
       end
     end
   end
-  def S3sync.s3urlSetup 	
+  def S3sync.s3urlSetup
     $S3syncGenerator = S3::QueryStringAuthGenerator.new($AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY, $S3syncOptions['--ssl'], $AWS_S3_HOST)
     $S3syncGenerator.calling_format = S3::CallingFormat::string_to_format($AWS_CALLING_FORMAT)
     $S3syncGenerator.expires_in = $S3syncOptions['--expires-in']
   end
-  
+
   def S3sync.S3tryConnect(bucket, host='')
     $S3syncHttp = $S3syncConnection.make_http(bucket, host, $HTTP_PROXY_HOST, $HTTP_PROXY_PORT, $HTTP_PROXY_USER, $HTTP_PROXY_PASSWORD)
   end
-  
+
   def S3sync.S3try(command, bucket, *args)
     if(not $S3syncHttp or (bucket != $S3syncLastBucket))
       $stderr.puts "Creating new connection" if $S3syncOptions['--debug']
@@ -71,20 +71,20 @@ module S3sync
           S3sync.S3tryConnect(bucket)
           break
         rescue Errno::ECONNRESET => e
-          $stderr.puts "Connection reset: #{e}" 
+          $stderr.puts "Connection reset: #{e}"
         rescue Errno::ECONNABORTED => e
-          $stderr.puts "Connection aborted: #{e}" 
+          $stderr.puts "Connection aborted: #{e}"
         rescue Errno::ETIMEDOUT => e
           $stderr.puts "Connection timed out: #{e}"
         rescue Timeout::Error => e
-          $stderr.puts "Connection timed out: #{e}" 
+          $stderr.puts "Connection timed out: #{e}"
         end
         $S3syncRetriesLeft -= 1
         $stderr.puts "#{$S3syncRetriesLeft} retries left, sleeping for #{$S3SYNC_WAITONERROR} seconds"
         Kernel.sleep $S3SYNC_WAITONERROR.to_i
       end
     end
-    
+
     result = nil
     delim = $,
     $,=' '
@@ -97,19 +97,19 @@ module S3sync
         result = $S3syncConnection.send(command, bucket, *args)
       rescue Errno::EPIPE => e
         forceRetry = true
-        $stderr.puts "Broken pipe: #{e}" 
+        $stderr.puts "Broken pipe: #{e}"
       rescue Errno::ECONNRESET => e
         forceRetry = true
-        $stderr.puts "Connection reset: #{e}" 
+        $stderr.puts "Connection reset: #{e}"
       rescue Errno::ECONNABORTED => e
         forceRetry = true
-        $stderr.puts "Connection aborted: #{e}" 
+        $stderr.puts "Connection aborted: #{e}"
       rescue Errno::ETIMEDOUT => e
         forceRetry = true
         $stderr.puts "Connection timed out: #{e}"
       rescue Timeout::Error => e
         forceRetry = true
-        $stderr.puts "Connection timed out: #{e}" 
+        $stderr.puts "Connection timed out: #{e}"
       rescue EOFError => e
         # i THINK this is happening like a connection reset
         forceRetry = true
@@ -161,7 +161,7 @@ module S3sync
     $, = delim
     result
   end
-  
+
   def S3sync.S3url(command, bucket, *args)
     S3sync.s3urlSetup() unless $S3syncGenerator
     result = nil
@@ -176,6 +176,6 @@ module S3sync
   def S3sync.utf8(content, charset = $S3SYNC_NATIVE_CHARSET)
     "#{content}".encode(charset, :invalid => :replace, :undef => :replace, :replace => '')
   end
-  
+
 end #module
 

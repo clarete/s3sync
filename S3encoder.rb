@@ -1,9 +1,9 @@
-# This software code is made available "AS IS" without warranties of any        
-# kind.  You may copy, display, modify and redistribute the software            
-# code either by itself or as incorporated into your code; provided that        
-# you do not remove any proprietary notices.  Your use of this software         
+# This software code is made available "AS IS" without warranties of any
+# kind.  You may copy, display, modify and redistribute the software
+# code either by itself or as incorporated into your code; provided that
+# you do not remove any proprietary notices.  Your use of this software
 # code is at your own risk and you waive any claim against the author
-# with respect to your use of this software code. 
+# with respect to your use of this software code.
 # (c) 2007 s3sync.net
 #
 
@@ -35,10 +35,10 @@ module S3ExtendCGI
     attr_writer :nativeCharacterEncoding
     @@useUTF8InEscape = false
     attr_writer :useUTF8InEscape
-    
+
     def S3Extend_escape(string)
       result = string
-      result = S3sync::utf8(string, @nativeCharacterEncoding) if @useUTF8InEscape 
+      result = S3sync::utf8(string, @nativeCharacterEncoding) if @useUTF8InEscape
       result = S3Extend_escape_orig(result)
       result.gsub!(/%2f/i, "/") if @exemptSlashesInEscape
       result.gsub!("+", "%20") if @usePercent20InEscape

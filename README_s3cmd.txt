@@ -1,5 +1,5 @@
-Welcome to s3cmd.rb 
-------------------- 
+Welcome to s3cmd.rb
+-------------------
 This is a ruby program that wraps S3 operations into a simple command-line tool.
 It is inspired by things like rsh3ll, #sh3ll, etc., but shares no code from
 them. It's meant as a companion utility to s3sync.rb but could be used on its
@@ -63,19 +63,19 @@ Create a new bucket:
 
 Create a new bucket in the EU:
 	s3cmd.rb createbucket BucketName EU
-   
+
 Find out the location constraint of a bucket:
    s3cmd.rb location BucketName
 
 Delete an old bucket you don't want any more:
 	s3cmd.rb deletebucket BucketName
-	
+
 Find out what's in a bucket, 10 lines at a time:
 	s3cmd.rb list BucketName 10
-	
+
 Only look in a particular prefix:
 	s3cmd.rb list BucketName:startsWithThis
-	
+
 Look in the virtual "directory" named foo;
 lists sub-"directories" and keys that are at this level.
 Note that if you specify a delimiter you must specify a max before it.
@@ -87,22 +87,22 @@ Delete a key:
 
 Delete all keys that match (like a combo between list and delete):
 	s3cmd.rb deleteall BucketName:SomePrefix
-	
-Only pretend you're going to delete all keys that match, but list them: 
+
+Only pretend you're going to delete all keys that match, but list them:
 	s3cmd.rb  --dryrun  deleteall  BucketName:SomePrefix
-	
+
 Delete all keys in a bucket (leaving the bucket):
 	s3cmd.rb deleteall BucketName
-	
+
 Get a file from S3 and store it to a local file
 	s3cmd.rb get BucketName:TheFileOnS3.txt  ALocalFile.txt
-	
-Put a local file up to S3 
+
+Put a local file up to S3
 Note we don't automatically set mime type, etc.
 NOTE that the order of the options doesn't change. S3 stays first!
 	s3cmd.rb put BucketName:TheFileOnS3.txt ALocalFile.txt
 
-	
+
 Change Log:
 -----------
 2006-10-14:

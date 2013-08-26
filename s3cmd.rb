@@ -1,51 +1,51 @@
-#!/usr/bin/env ruby 
-# This software code is made available "AS IS" without warranties of any        
-# kind.  You may copy, display, modify and redistribute the software            
-# code either by itself or as incorporated into your code; provided that        
-# you do not remove any proprietary notices.  Your use of this software         
+#!/usr/bin/env ruby
+# This software code is made available "AS IS" without warranties of any
+# kind.  You may copy, display, modify and redistribute the software
+# code either by itself or as incorporated into your code; provided that
+# you do not remove any proprietary notices.  Your use of this software
 # code is at your own risk and you waive any claim against the author
-# with respect to your use of this software code. 
+# with respect to your use of this software code.
 # (c) 2007 s3sync.net
 #
 
 module S3sync
 
   # always look "here" for include files (thanks aktxyz)
-   $LOAD_PATH << File.expand_path(File.dirname(__FILE__)) 
+   $LOAD_PATH << File.expand_path(File.dirname(__FILE__))
 
 	require 's3try'
-	
+
 	$S3CMD_VERSION = '1.2.6'
-   
+
 	require 'getoptlong'
 
    # after other mods, so we don't overwrite yaml vals with defaults
    require 's3config'
    include S3Config
-	
-	def S3sync.s3cmdMain 	
-          # ---------- OPTIONS PROCESSING ---------- #	
-          
+
+	def S3sync.s3cmdMain
+          # ---------- OPTIONS PROCESSING ---------- #
+
           $S3syncOptions = Hash.new
           optionsParser = GetoptLong.new(
                                          [ '--help',    '-h',	GetoptLong::NO_ARGUMENT ],
                                          [ '--ssl',     '-s',	GetoptLong::NO_ARGUMENT ],
                                          [ '--verbose', '-v',	GetoptLong::NO_ARGUMENT ],
-                                         [ '--dryrun',  '-n',	GetoptLong::NO_ARGUMENT ], 
+                                         [ '--dryrun',  '-n',	GetoptLong::NO_ARGUMENT ],
                                          [ '--debug',   '-d',	GetoptLong::NO_ARGUMENT ],
                                          [ '--progress',       GetoptLong::NO_ARGUMENT ],
                                          [ '--expires-in', GetoptLong::REQUIRED_ARGUMENT ]
                                          )
-          
+
           def S3sync.s3cmdUsage(message = nil)
             $stderr.puts message if message
             name = $0.split('/').last
             $stderr.puts <<"ENDUSAGE"
 #{name} [options] <command> [arg(s)]\t\tversion #{$S3CMD_VERSION}
-  --help    -h        --verbose     -v     --dryrun    -n	
+  --help    -h        --verbose     -v     --dryrun    -n
   --ssl     -s        --debug       -d     --progress
   --expires-in=( <# of seconds> | [#d|#h|#m|#s] )
-  
+
 Commands:
 #{name}  listbuckets  [headers]
 #{name}  createbucket  <bucket>  [constraint (i.e. EU)]
@@ -58,7 +58,7 @@ Commands:
 ENDUSAGE
             exit
           end #usage
-          
+
           begin
             optionsParser.each {|opt, arg| $S3syncOptions[opt] = (arg || true)}
           rescue StandardError
@@ -67,7 +67,7 @@ ENDUSAGE
           s3cmdUsage if $S3syncOptions['--help']
           $S3syncOptions['--verbose'] = true if $S3syncOptions['--dryrun'] or $S3syncOptions['--debug'] or $S3syncOptions['--progress']
           $S3syncOptions['--ssl'] = true if $S3syncOptions['--ssl'] # change from "" to true to appease s3 port chooser
-          
+
           if $S3syncOptions['--expires-in'] =~ /d|h|m|s/
             e = $S3syncOptions['--expires-in']
             days = (e =~ /(\d+)d/)? (/(\d+)d/.match(e))[1].to_i : 0
@@ -76,14 +76,14 @@ ENDUSAGE
             seconds = (e =~ /(\d+)s/)? (/(\d+)s/.match(e))[1].to_i : 0
             $S3syncOptions['--expires-in'] = seconds + 60 * ( minutes + 60 * ( hours + 24 * ( days ) ) )
           end
-          
+
           # ---------- CONNECT ---------- #
-          S3sync::s3trySetup 
-          # ---------- COMMAND PROCESSING ---------- #		
-          
+          S3sync::s3trySetup
+          # ---------- COMMAND PROCESSING ---------- #
+
           command, path, file = ARGV
-          
-          s3cmdUsage("You didn't set up your environment variables; see README.txt") if not($AWS_ACCESS_KEY_ID and $AWS_SECRET_ACCESS_KEY) 
+
+          s3cmdUsage("You didn't set up your environment variables; see README.txt") if not($AWS_ACCESS_KEY_ID and $AWS_SECRET_ACCESS_KEY)
           s3cmdUsage("Need a command (etc)") if not command
 
           path = '' unless path
@@ -111,7 +111,7 @@ ENDUSAGE
                 # the s3 commands (with my modified UTF-8 conversion) expect native char encoding input
                 key = utf8(item.key)
                 $stderr.puts "delete #{bucket}:#{key} #{headers.inspect if headers}" if $S3syncOptions['--verbose']
-                S3try(:delete, bucket, key) unless $S3syncOptions['--dryrun']		
+                S3try(:delete, bucket, key) unless $S3syncOptions['--dryrun']
               end
               more = res.properties.is_truncated
               marker = (res.properties.next_marker)? res.properties.next_marker : ((res.entries.length > 0) ? res.entries.last.key : nil)
@@ -124,14 +124,14 @@ ENDUSAGE
             headers = hashPairs(ARGV[4...ARGV.length])
             $stderr.puts "list #{bucket}:#{path} #{max} #{delim} #{headers.inspect if headers}" if $S3syncOptions['--verbose']
             puts "--------------------"
-            
+
             more = true
             marker = nil
             while more do
               res = s3cmdList(bucket, path, max, delim, marker, headers)
               if delim
                 res.common_prefix_entries.each do |item|
-                  
+
                   puts "dir: " + utf8(item.prefix)
                 end
                 puts "--------------------"
@@ -145,7 +145,7 @@ ENDUSAGE
                 marker = (res.properties.next_marker)? res.properties.next_marker : ((res.entries.length > 0) ? res.entries.last.key : nil)
                 # get this into local charset; when we pass it to s3 that is what's expected
                 marker = utf8(marker) if marker
-						
+
               else
                 more = false
               end
@@ -212,7 +212,7 @@ ENDUSAGE
           else
             s3cmdUsage
           end
-          
+
 	end #main
 	def S3sync.s3cmdList(bucket, path, max=nil, delim=nil, marker=nil, headers={})
           debug(max)
@@ -223,7 +223,7 @@ ENDUSAGE
           options['marker'] = marker if marker
           S3try(:list_bucket, bucket, options, headers)
 	end
-	
+
 	# turn an array into a hash of pairs
 	def S3sync.hashPairs(ar)
           ret = Hash.new
@@ -236,11 +236,11 @@ ENDUSAGE
 	end
       end #module
 
-      
+
 
       def debug(str)
 	$stderr.puts str if $S3syncOptions['--debug']
       end
-      
+
       S3sync::s3cmdMain #go!
-      
+

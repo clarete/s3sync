@@ -52,7 +52,7 @@
 #   while g.next?
 #     puts g.next
 #   end
-#   
+#
 class Generator
   include Enumerable
 

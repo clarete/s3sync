@@ -1,4 +1,4 @@
-Welcome to s3sync.rb         
+Welcome to s3sync.rb
 --------------------
 Home page, wiki, forum, bug reports, etc: http://s3sync.net
 
@@ -28,7 +28,7 @@ does not share any components or logic from that utility; the only relation is
 that it performs a similar task.
 
 
-Examples: 
+Examples:
 ---------
 (using S3 bucket 'mybucket' and prefix 'pre')
   Put the local etc directory itself into S3
@@ -51,19 +51,19 @@ Examples:
 
 Prerequisites:
 --------------
-You need a functioning Ruby (>=1.8.4) installation, as well as the OpenSSL ruby 
+You need a functioning Ruby (>=1.8.4) installation, as well as the OpenSSL ruby
 library (which may or may not come with your ruby).
 
-How you get these items working on your system is really not any of my 
-business, but you might find the following things helpful.  If you're using 
-Windows, the ruby site has a useful "one click installer" (although it takes 
-more clicks than that, really).  On debian (and ubuntu, and other debian-like 
+How you get these items working on your system is really not any of my
+business, but you might find the following things helpful.  If you're using
+Windows, the ruby site has a useful "one click installer" (although it takes
+more clicks than that, really).  On debian (and ubuntu, and other debian-like
 things), there are apt packages available for ruby and the open ssl lib.
 
 
 Your environment:
 -----------------
-s3sync needs to know several interesting values to work right.  It looks for 
+s3sync needs to know several interesting values to work right.  It looks for
 them in the following environment variables -or- a s3config.yml file.
 In the yml case, the names need to be lowercase (see example file).
 Furthermore, the yml is searched for in the following locations, in order:
@@ -74,7 +74,7 @@ Furthermore, the yml is searched for in the following locations, in order:
 Required:
 	AWS_ACCESS_KEY_ID
 	AWS_SECRET_ACCESS_KEY
-	
+
 	If you don't know what these are, then s3sync is probably not the
 	right tool for you to be starting out with.
 Optional:
@@ -89,19 +89,19 @@ Optional:
    AWS_CALLING_FORMAT - Defaults to REGULAR
        REGULAR   # http://s3.amazonaws.com/bucket/key
        SUBDOMAIN # http://bucket.s3.amazonaws.com/key
-       VANITY    # http://<vanity_domain>/key  
+       VANITY    # http://<vanity_domain>/key
 
 Important: For EU-located buckets you should set the calling format to SUBDOMAIN
-Important: For US buckets with CAPS or other weird traits set the calling format 
+Important: For US buckets with CAPS or other weird traits set the calling format
 to REGULAR
 
-I use "envdir" from the daemontools package to set up my env 
+I use "envdir" from the daemontools package to set up my env
 variables easily: http://cr.yp.to/daemontools/envdir.html
 For example:
 	envdir /root/s3sync/env /root/s3sync/s3sync.rb -etc etc etc
-I know there are other similar tools out there as well.  
+I know there are other similar tools out there as well.
 
-You can also just call it in a shell script where you have exported the vars 
+You can also just call it in a shell script where you have exported the vars
 first such as:
 #!/bin/bash
 export AWS_ACCESS_KEY_ID=valueGoesHere
@@ -132,7 +132,7 @@ get/puts.
 
 
 About Directories, the bane of any S3 sync-er
---------------------------------------------- 
+---------------------------------------------
 In S3 there's no actual concept of folders, just keys and nodes. So, every tool
 uses its own proprietary way of storing dir info (my scheme being the best
 naturally) and in general the methods are not compatible.
@@ -151,7 +151,7 @@ s3sync's normal operation is to compare the file size and MD5 hash of each item
 to decide whether it needs syncing.  On the S3 side, these hashes are stored and
 returned to us as the "ETag" of each item when the bucket is listed, so it's
 very easy.  On the local side, the MD5 must be calculated by pushing every byte
-in the file through the MD5 algorithm.  This is CPU and IO intensive!  
+in the file through the MD5 algorithm.  This is CPU and IO intensive!
 
 Thus you can specify the option --no-md5. This will compare the upload time on
 S3 to the "last modified" time on the local item, and not do md5 calculations
@@ -166,7 +166,7 @@ behavior.
 A word on SSL_CERT_DIR:
 -----------------------
 On my debian install I didn't find any root authority public keys.  I installed
-some by running this shell archive: 
+some by running this shell archive:
 http://mirbsd.mirsolutions.de/cvs.cgi/src/etc/ssl.certs.shar
 (You have to click download, and then run it wherever you want the certs to be
 placed).  I do not in any way assert that these certificates are good,
@@ -189,7 +189,7 @@ using more than one CA.
 Getting started:
 ----------------
 Invoke by typing s3sync.rb and you should get a nice usage screen.
-Options can be specified in short or long form (except --delete, which has no 
+Options can be specified in short or long form (except --delete, which has no
 short form)
 
 ALWAYS TEST NEW COMMANDS using --dryrun(-n) if you want to see what will be
@@ -213,10 +213,10 @@ the command line you specify is not going to do something terrible to your
 cherished and irreplaceable data.
 
 
-Updates and other discussion: 
------------------------------ 
+Updates and other discussion:
+-----------------------------
 The latest version of s3sync should normally be at:
-	http://s3.amazonaws.com/ServEdge_pub/s3sync/s3sync.tar.gz 
+	http://s3.amazonaws.com/ServEdge_pub/s3sync/s3sync.tar.gz
 and the Amazon S3 forums probably have a few threads going on it at any given
 time. I may not always see things posted to the threads, so if you want you can
 contact me at gbs-s3@10forward.com too.
@@ -291,7 +291,7 @@ program).
 2006-10-26
 Version 1.0.11
 Revamped some details of the generators and comparator so that directories are
-handled in a more exact and uniform fashion across local and S3. 
+handled in a more exact and uniform fashion across local and S3.
 ----------
 
 2006-11-28
@@ -301,7 +301,7 @@ Added a couple more error catches to s3try.
 
 2007-01-08
 Version 1.0.13
-Numerous small changes to slash and path handling, in order to catch several 
+Numerous small changes to slash and path handling, in order to catch several
 cases where "root" directory nodes were not being created on S3.
 This makes restores work a lot more intuitively in many cases.
 ----------
@@ -328,7 +328,7 @@ which we need in order to make some decisios in the local generator.
 - Fixed problem where it would prepend a "/" to s3 key names even with blank
 prefix.
 - Fixed S3->local when there's no "/" in the source so it doesn't try to create
-a folder with the bucket name. 
+a folder with the bucket name.
 - Updated s3try and s3_s3sync_mod to allow SSL_CERT_FILE
 ----------
 
@@ -354,7 +354,7 @@ In the case of commands of the form:
 The root directory node in s3 was being stored as "somedir/" instead of "somedir"
 which caused restores to mess up when you say:
 	s3sync -r somebucket: restoredir
-The fix to this, by coincidence, actually makes s3fox work even *less* well with 
+The fix to this, by coincidence, actually makes s3fox work even *less* well with
 s3sync.  I really need to build my own xul+javascript s3 GUI some day.
 
 Also fixed some of the NoMethodError stuff for when --progress is used
@@ -370,7 +370,7 @@ Added Alastair Brunton's yaml config code.
 Version 1.2.1
 Compatibility for S3 API revisions.
 When retries are exhausted, emit an error.
-Don't ever try to delete the 'root' local dir.    
+Don't ever try to delete the 'root' local dir.
 ----------
 
 2007-11-20

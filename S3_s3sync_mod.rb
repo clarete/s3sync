@@ -6,13 +6,13 @@
 #  Digital Services, Inc. or its affiliates with respect to your use of
 #  this software code. (c) 2006 Amazon Digital Services, Inc. or its
 #  affiliates.
-#  
-# This software code is made available "AS IS" without warranties of any        
-# kind.  You may copy, display, modify and redistribute the software            
-# code either by itself or as incorporated into your code; provided that        
-# you do not remove any proprietary notices.  Your use of this software         
+#
+# This software code is made available "AS IS" without warranties of any
+# kind.  You may copy, display, modify and redistribute the software
+# code either by itself or as incorporated into your code; provided that
+# you do not remove any proprietary notices.  Your use of this software
 # code is at your own risk and you waive any claim against the author
-# with respect to your use of this software code. 
+# with respect to your use of this software code.
 # (c) 2007 s3sync.net
 #
 require 'S3'
@@ -26,22 +26,22 @@ require 'HTTPStreaming'
 
 module S3
   class AWSAuthConnection
-	
+
     def make_http(bucket='', host='', proxy_host=nil, proxy_port=nil, proxy_user=nil, proxy_pass=nil)
 
       # build the domain based on the calling format
       server = ''
       if host != ''
-        server = host           
+        server = host
       elsif bucket.empty?
         # for a bucketless request (i.e. list all buckets)
         # revert to regular domain case since this operation
         # does not make sense for vanity domains
         server = @server
       elsif @calling_format == CallingFormat::SUBDOMAIN
-        server = "#{bucket}.#{@server}" 
+        server = "#{bucket}.#{@server}"
       elsif @calling_format == CallingFormat::VANITY
-        server = bucket 
+        server = bucket
       else
         server = @server
       end
@@ -55,7 +55,7 @@ module S3
       http.start
       return http
     end
-    
+
     # add support for streaming the response body to an IO stream
     alias __make_request__ make_request
     def make_request(method, bucket='', key='', path_args={}, headers={}, data='', metadata={}, streamOut=nil)
@@ -67,40 +67,40 @@ module S3
       # add the slash after the bucket regardless
       # the key will be appended if it is non-empty
       path << "/#{key}"
-      
+
       # build the path_argument string
-      # add the ? in all cases since 
+      # add the ? in all cases since
       # signature and credentials follow path args
       path << '?'
-      path << S3.path_args_hash_to_string(path_args) 
-      
+      path << S3.path_args_hash_to_string(path_args)
+
       req = method_to_request_class(method).new("#{path}")
-      
+
       set_headers(req, headers)
       set_headers(req, metadata, METADATA_PREFIX)
       set_headers(req, {'Connection' => 'keep-alive', 'Keep-Alive' => '300'})
-      
+
       set_aws_auth_header(req, @aws_access_key_id, @aws_secret_access_key, bucket, key, path_args)
-      
+
       http = $S3syncHttp
-      
+
       if req.request_body_permitted?
         return http.request(req, data, streamOut)
       else
         return http.request(req, nil, streamOut)
       end
     end
-    
+
     # a "get" operation that sends the body to an IO stream
     def get_stream(bucket, key, headers={}, streamOut=nil)
       return GetResponse.new(make_request('GET', bucket, CGI::escape(key), {}, headers, '', {}, streamOut))
     end
-    
+
     # a "get" operation that sends the body to an IO stream
     def get_query_stream(bucket, key, path_args={}, headers={}, streamOut=nil)
       return GetResponse.new(make_request('GET', bucket, CGI::escape(key), path_args, headers, '', {}, streamOut))
     end
-    
+
     def head(bucket, key=nil, headers={})
       return GetResponse.new(make_request('HEAD', bucket, CGI::escape(key), {}, headers, '', {}))
     end
@@ -117,13 +117,13 @@ module S3
     #   headers['Expect'] = "100-continue"
     #   __put__(bucket, key, object, headers)
     #end
-    
-               
+
+
     # allow ssl validation
     attr_accessor :verify_mode
     attr_accessor :ca_path
-    attr_accessor :ca_file      
-    
+    attr_accessor :ca_file
+
   end
   module CallingFormat
     def CallingFormat.string_to_format(s)
@@ -139,5 +139,5 @@ module S3
       end
     end
   end
-  
+
 end
