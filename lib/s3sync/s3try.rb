@@ -7,6 +7,7 @@
 # with respect to your use of this software code.
 # (c) 2007 s3sync.net
 #
+
 module S3sync
 
   $AWS_ACCESS_KEY_ID = ENV["AWS_ACCESS_KEY_ID"]
@@ -24,24 +25,21 @@ module S3sync
   $AWS_CALLING_FORMAT = (ENV["AWS_CALLING_FORMAT"] or "REGULAR")
 
   require 'S3'
-
   require 'HTTPStreaming'
   require 'S3encoder'
+
   CGI::exemptSlashesInEscape = true
   CGI::usePercent20InEscape = true
   CGI::useUTF8InEscape = true
   CGI::nativeCharacterEncoding = $S3SYNC_NATIVE_CHARSET
   require 'S3_s3sync_mod'
 
-
   $S3syncRetriesLeft = $S3SYNC_RETRIES.to_i
 
   def S3sync.s3trySetup
-
-    # ---------- CONNECT ---------- #
-
     $S3syncConnection = S3::AWSAuthConnection.new($AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY, $S3syncOptions['--ssl'], $AWS_S3_HOST)
     $S3syncConnection.calling_format = S3::CallingFormat::string_to_format($AWS_CALLING_FORMAT)
+
     if $S3syncOptions['--ssl']
       if $SSL_CERT_DIR
         $S3syncConnection.verify_mode = OpenSSL::SSL::VERIFY_PEER
@@ -52,6 +50,7 @@ module S3sync
       end
     end
   end
+
   def S3sync.s3urlSetup
     $S3syncGenerator = S3::QueryStringAuthGenerator.new($AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY, $S3syncOptions['--ssl'], $AWS_S3_HOST)
     $S3syncGenerator.calling_format = S3::CallingFormat::string_to_format($AWS_CALLING_FORMAT)
@@ -172,9 +171,4 @@ module S3sync
     $, = delim
     result
   end
-
-  def S3sync.utf8(content, charset = $S3SYNC_NATIVE_CHARSET)
-    "#{content}".encode(charset, :invalid => :replace, :undef => :replace, :replace => '')
-  end
-
 end #module
