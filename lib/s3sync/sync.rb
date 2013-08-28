@@ -86,13 +86,13 @@ module S3sync
       @args = args
 
       # Reading the source and destination using our helper method
-      if (local, remote, bucket = parse_params argv).nil?
+      if (source, destination, bucket = parse_params argv).nil?
         raise WrongUsage.new(nil, 'Need a source and a destination')
       end
 
       # Getting the trees
-      source_tree = read_tree local
-      destination_tree = read_tree remote
+      source_tree = read_tree source
+      destination_tree = read_tree destination
 
       # Getting the list of resources to be exchanged between the two peers
       _, upload_list, remove_list = SyncCommand.cmp source_tree, destination_tree
@@ -106,8 +106,8 @@ module S3sync
         end
       } if @args[:options]["--exclude"]
 
-      upload_files remote, local, upload_list
-      remove_files remote, remove_list
+      upload_files destination, source, upload_list
+      remove_files destination, remove_list unless @args[:options]["--keep"]
     end
 
     def parse_params args

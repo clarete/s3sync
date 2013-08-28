@@ -95,6 +95,7 @@ Global Options:
 
   Options:
     -e <pattern>, --exclude=<pattern>
+    -k, --keep
 
 ENDUSAGE
 
