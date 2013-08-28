@@ -1,4 +1,5 @@
 require 's3sync/exceptions'
+require 's3sync/sync'
 require 'aws/s3'
 
 module Commands
@@ -103,5 +104,9 @@ module Commands
         raise FailureFeedback.new("There's no key named `#{args[:key]}' in the bucket `#{args[:bucket]}'")
       end
     end
+  end
+
+  def Commands._cmd_sync args
+    SyncCommand.new args, ARGV
   end
 end

@@ -53,6 +53,7 @@ module S3sync
         ['--force',      '-f', GetoptLong::NO_ARGUMENT],
         ['--acl',        '-a', GetoptLong::REQUIRED_ARGUMENT],
         ['--method',     '-m', GetoptLong::REQUIRED_ARGUMENT],
+        ['--exclude',    '-e', GetoptLong::REQUIRED_ARGUMENT],
         ['--no-ssl',           GetoptLong::NO_ARGUMENT],
         ['--expires-in',       GetoptLong::REQUIRED_ARGUMENT],
       ]

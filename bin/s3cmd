@@ -87,6 +87,15 @@ Global Options:
 #{name} put <bucket>[:<key>] <file>
   Uploads the file `file` to the `bucket` under the path `key`
 
+#{name} sync <source> <destination>
+
+  One of source or destination must be remote and the other must be local,
+  where local points to a folder in the file system and remote conform to the
+  format `<bucket>[:<key>]`.
+
+  Options:
+    -e <pattern>, --exclude=<pattern>
+
 ENDUSAGE
 
   $stderr.puts "\nCurrent error:\n  #{exc.msg}\n" if exc.msg
