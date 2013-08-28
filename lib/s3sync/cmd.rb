@@ -59,8 +59,8 @@ module S3sync
 
       begin
         GetoptLong.new(*args).each {|opt, arg| options[opt] = (arg || true)}
-      rescue StandardError
-        raise WrongUsage
+      rescue StandardError => exc
+        raise WrongUsage.new nil, exc.message
       end
 
       # Let's just show the help to the user
