@@ -92,13 +92,13 @@ module S3sync
       end
 
       # Reading what to do from the user
-      bucket = nil
-      command, key, file = ARGV
+      command = ARGV.shift
+      raise WrongUsage.new(nil, "Need a command (eg.: `list', `listbuckets', etc)") if not command
 
-      # We can't proceed from here!
-      raise WrongUsage.new(nil, "Need a command (eg.: `list', `createbucket', etc)") if not command
+      key, file = ARGV
 
       # Parsing the bucket name
+      bucket = nil
       bucket, key = key.split(':') if key
 
       # Returning things we need in the next level

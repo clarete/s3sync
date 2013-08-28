@@ -16,7 +16,7 @@ module Commands
   end
 
   def Commands._cmd_createbucket args
-    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
+    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket]
 
     begin
       params = {}
@@ -32,7 +32,7 @@ module Commands
   end
 
   def Commands._cmd_deletebucket args
-    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
+    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket]
 
     # Getting the bucket
     bucket_obj = args[:s3].buckets[args[:bucket]]
@@ -50,21 +50,21 @@ module Commands
   end
 
   def Commands._cmd_list args
-    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
+    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket]
     args[:s3].buckets[args[:bucket]].objects.with_prefix(args[:key] || "").each do |object|
       puts "#{object.key}\t#{object.content_length}\t#{object.last_modified}"
     end
   end
 
   def Commands._cmd_delete args
-    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
-    raise WrongUsage.new(nil, "You need to inform a key") if not args[:key] or args[:key].empty?
+    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket]
+    raise WrongUsage.new(nil, "You need to inform a key") if not args[:key]
     args[:s3].buckets[args[:bucket]].objects[args[:key]].delete
   end
 
   def Commands._cmd_url args
-    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
-    raise WrongUsage.new(nil, "You need to inform a key") if not args[:key] or args[:key].empty?
+    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket]
+    raise WrongUsage.new(nil, "You need to inform a key") if not args[:key]
 
     method = args[:options]['--method'] || 'read'
     raise WrongUsage.new(nil, "") unless AVAILABLE_METHODS.include? method
@@ -76,8 +76,8 @@ module Commands
   end
 
   def Commands._cmd_put args
-    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
-    raise WrongUsage.new(nil, "You need to inform a file") if not args[:file] or args[:file].empty?
+    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket]
+    raise WrongUsage.new(nil, "You need to inform a file") if not args[:file]
 
     # key + file name
     name = S3sync.safe_join [args[:key], File.basename(args[:file])]
@@ -85,9 +85,9 @@ module Commands
   end
 
   def Commands._cmd_get args
-    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
-    raise WrongUsage.new(nil, "You need to inform a key") if not args[:key] or args[:key].empty?
-    raise WrongUsage.new(nil, "You need to inform a file") if not args[:file] or args[:file].empty?
+    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket]
+    raise WrongUsage.new(nil, "You need to inform a key") if not args[:key]
+    raise WrongUsage.new(nil, "You need to inform a file") if not args[:file]
 
     # Saving the content to be downloaded to the current directory if the
     # destination is a directory
@@ -98,9 +98,9 @@ module Commands
       begin
         args[:s3].buckets[args[:bucket]].objects[args[:key]].read do |chunk| f.write(chunk) end
       rescue AWS::S3::Errors::NoSuchBucket
-        raise FailureFeedback.new("There's no bucket named `#{bucket}'")
+        raise FailureFeedback.new("There's no bucket named `#{args[:bucket]}'")
       rescue AWS::S3::Errors::NoSuchKey
-        raise FailureFeedback.new("There's no key named `#{key}' in the bucket `#{bucket}'")
+        raise FailureFeedback.new("There's no key named `#{args[:key]}' in the bucket `#{args[:bucket]}'")
       end
     end
   end
