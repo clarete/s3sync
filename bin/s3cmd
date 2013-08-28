@@ -30,30 +30,62 @@ end
 # information needed was not enough
 begin
   S3sync::Cmd.new(conf)
+
+rescue S3sync::FailureFeedback => exc
+  $stderr.puts exc.message
+  exit 1
+
 rescue S3sync::WrongUsage => exc
   name = $0.split('/').last
 
   $stderr.puts <<"ENDUSAGE"
 Usage: #{name} [options] <command> [arg(s)]
 
-Options:
+Global Options:
   -h, --help
   -v, --verbose
   -n, --dryrun
-  -s, --ssl
   -d, --debug
       --progress
-      --expires-in=(<# of seconds> | [#d|#h|#m|#s])
 
-Commands:
-  #{name} listbuckets
-  #{name} createbucket <bucket>
-  #{name} deletebucket <bucket>
-  #{name} list <bucket>[:prefix]
-  #{name} location <bucket>
-  #{name} delete <bucket>:<key>
-  #{name} deleteall <bucket>[:prefix]
-  #{name} get|put <bucket>:<key> <file>
+#{name} listbuckets
+  List all available buckets
+
+#{name} createbucket <bucket>
+  Creates a new bucket
+
+  Options:
+
+    -a <ACL>, --acl=(private|public_read|public_read_write)
+
+#{name} deletebucket [options] <bucket>
+  Removes an existing bucket
+
+  Options:
+    -f, --force  Deletes non-empty buckets (BE CAREFUL)
+
+#{name} list <bucket>[:prefix]
+  List content inside of bucket
+
+  if `prefix' is present, only content under `prefix' will be listed.
+
+#{name} delete <bucket>:<key>
+  Removes `key` from `bucket`
+
+#{name} get <bucket>:<key> <file>
+  Retrieves the remote `key` object from `bucket` and saves to the local path
+  specified in `file`
+
+#{name} put <bucket>[:<key>] <file>
+  Uploads the file `file` to the `bucket` under the path `key`
+
+#{name} url [options] <bucket>:<key>
+  Returns a url pointing to `key` inside of `bucket`
+
+  Options:
+    -s, --ssl
+        --expires-in=(<# of seconds> | [#d|#h|#m|#s])
+
 ENDUSAGE
 
   $stderr.puts "\nCurrent error:\n  #{exc.msg}\n" if exc.msg

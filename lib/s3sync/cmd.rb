@@ -1,35 +1,32 @@
+# (c) 2013  Lincoln de Sousa <lincoln@clarete.li>
+# (c) 2007 s3sync.net
+#
 # This software code is made available "AS IS" without warranties of any
 # kind.  You may copy, display, modify and redistribute the software
 # code either by itself or as incorporated into your code; provided that
 # you do not remove any proprietary notices.  Your use of this software
 # code is at your own risk and you waive any claim against the author
 # with respect to your use of this software code.
-# (c) 2007 s3sync.net
-#
 
 require 'getoptlong'
-require 's3sync/exceptions'
-require 's3sync/config'
 require 'aws/s3'
 
-require 'rubygems'
+require 's3sync/util'
 require 'debugger'
-
-VERSION = '2.0.0'
-
 
 module S3sync
 
+  EXISTING_ACLS = [:public_read, :public_read_write, :private]
+
   class Cmd
+    @con = nil
 
     def initialize(conf = conf)
       # The chain that initializes our command and find the right action
       options, command, bucket, key, file = read_info_from_args(parse_args())
 
       # Connecting to S3 with parameters received from the config obj
-      conn = AWS::S3::Base.establish_connection!(
-        :server            => conf[:AWS_S3_HOST] || 's3.amazon.com',
-        :use_ssl           => true,
+      @s3 = AWS::S3.new(
         :access_key_id     => conf[:AWS_ACCESS_KEY_ID],
         :secret_access_key => conf[:AWS_SECRET_ACCESS_KEY],
       )
@@ -38,53 +35,75 @@ module S3sync
       case command
 
       when "listbuckets"
-        AWS::S3::Service.buckets.each do |bkt|
-          puts "#{bkt.name}, #{bkt.creation_date}"
+        @s3.buckets.each do |bkt|
+          puts "#{bkt.name}"
         end
 
       when "createbucket"
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket or bucket.empty?
-        AWS::S3::Bucket.create bucket
+
+        begin
+          params = {}
+          if acl = options['--acl']
+            raise WrongUsage.new(nil, "Invalid ACL. Should be any of #{EXISTING_ACLS.join ', '}") if not EXISTING_ACLS.include? acl
+            params.merge!({:acl => acl.to_sym})
+          end
+
+          @s3.buckets.create bucket, params
+        rescue AWS::S3::Errors::BucketAlreadyExists => exc
+          raise FailureFeedback.new("Bucket `#{bucket}' already exists")
+        end
 
       when "deletebucket"
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket or bucket.empty?
-        AWS::S3::Bucket.delete bucket
+
+        # Getting the bucket
+        bucket_obj = @s3.buckets[bucket]
+
+        # Do not kill buckets with content unless explicitly asked
+        if not options['--force'] and bucket_obj.objects.count > 0
+          raise FailureFeedback.new("Cowardly refusing to remove non-empty bucket `#{bucket}'. Try with -f.")
+        end
+
+        begin
+          bucket_obj.delete!
+        rescue AWS::S3::Errors::AccessDenied => exc
+          raise FailureFeedback.new("Access Denied")
+        end
 
       when "list"
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket or bucket.empty?
-        bucket_obj = AWS::S3::Bucket.find bucket
-        bucket_obj.each do |object|
-          puts "#{object.key}\t#{object.about['content-length']}\t#{object.about['last-modified']}"
+        @s3.buckets[bucket].objects.with_prefix(key || "").each do |object|
+          puts "#{object.key}\t#{object.content_length}\t#{object.last_modified}"
         end
 
       when "delete"
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket or bucket.empty?
         raise WrongUsage.new(nil, "You need to inform a key") if not key or key.empty?
-        AWS::S3::S3Object.delete key, bucket
+        @s3.buckets[bucket].objects[key].delete
 
       when "put"
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket or bucket.empty?
-        raise WrongUsage.new(nil, "You need to inform a key") if not key or key.empty?
         raise WrongUsage.new(nil, "You need to inform a file") if not file or file.empty?
 
         # key + file name
-        name = File.join(key, File.basename(file))
-        AWS::S3::S3Object.store name, open(file), bucket
+        name = S3sync.safe_join [key, File.basename(file)]
+        @s3.buckets[bucket].objects[name].write Pathname.new(file)
 
       when "get"
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket or bucket.empty?
         raise WrongUsage.new(nil, "You need to inform a key") if not key or key.empty?
         raise WrongUsage.new(nil, "You need to inform a file") if not file or file.empty?
 
-        # Requesting the data
-        content = AWS::S3::S3Object.value key, bucket
-
-        # Not creating the file until we have the data, so we don't create
-        # trash
-        file = File.open file, 'wb'
-        file.write content
-        file.close
-
+        File.open(file, 'wb') do |file|
+          begin
+            @s3.buckets[bucket].objects[key].read do |chunk| file.write(chunk) end
+          rescue AWS::S3::Errors::NoSuchBucket
+            raise FailureFeedback.new("There's no bucket named `#{bucket}'")
+          rescue AWS::S3::Errors::NoSuchKey
+            raise FailureFeedback.new("There's no key named `#{key}' in the bucket `#{bucket}'")
+          end
+        end
       else
         raise WrongUsage.new(nil, "Command `#{command}' does not exist" )
       end
@@ -95,6 +114,9 @@ module S3sync
 
       args = [
         ['--help',       '-h', GetoptLong::NO_ARGUMENT],
+        ['--force',      '-f', GetoptLong::NO_ARGUMENT],
+        ['--acl',        '-a', GetoptLong::REQUIRED_ARGUMENT],
+
         ['--ssl',        '-s', GetoptLong::NO_ARGUMENT],
         ['--verbose',    '-v', GetoptLong::NO_ARGUMENT],
         ['--dryrun',     '-n', GetoptLong::NO_ARGUMENT],

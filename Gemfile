@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-gem 'aws-s3'
+gem 'aws-sdk'
 gem 'debugger'

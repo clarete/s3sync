@@ -1,5 +1,5 @@
 module S3sync
-  def S3sync.utf8(content, charset = $S3SYNC_NATIVE_CHARSET)
-    "#{content}".encode(charset, :invalid => :replace, :undef => :replace, :replace => '')
+  def S3sync.safe_join(parts)
+    File.join *(parts.select {|v| !v.nil? && !v.empty? })
   end
 end

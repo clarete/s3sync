@@ -9,7 +9,10 @@
 
 module S3sync
 
-  class NoConfigFound < StandardError
+  class SyncException < StandardError
+  end
+
+  class NoConfigFound < SyncException
 
     attr_accessor :paths_checked
 
@@ -18,7 +21,7 @@ module S3sync
     end
   end
 
-  class WrongUsage < StandardError
+  class WrongUsage < SyncException
 
     attr_accessor :error_code
     attr_accessor :msg
@@ -27,6 +30,9 @@ module S3sync
       @error_code = error_code || 1
       @msg = msg
     end
+  end
+
+  class FailureFeedback < SyncException
   end
 
 end
