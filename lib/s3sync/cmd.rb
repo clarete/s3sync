@@ -71,10 +71,6 @@ module S3sync
     end
 
     def read_info_from_args(options)
-      # Setting up boolean values
-      options['--verbose'] = true if options['--dryrun'] or options['--debug'] or options['--progress']
-      options['--ssl'] = true if options['--ssl'] # change from "" to true to appease s3 port chooser
-
       # Parsing expre date
       if options['--expires-in'] =~ /d|h|m|s/
 
