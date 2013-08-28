@@ -7,6 +7,8 @@ module Commands
 
   AVAILABLE_ACLS = [:public_read, :public_read_write, :private]
 
+  AVAILABLE_METHODS = ['read', 'get', 'put', 'write', 'delete']
+
   def Commands._cmd_listbuckets args
     args[:s3].buckets.each do |bkt|
       puts "#{bkt.name}"
@@ -58,6 +60,19 @@ module Commands
     raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
     raise WrongUsage.new(nil, "You need to inform a key") if not args[:key] or args[:key].empty?
     args[:s3].buckets[args[:bucket]].objects[args[:key]].delete
+  end
+
+  def Commands._cmd_url args
+    raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket] or args[:bucket].empty?
+    raise WrongUsage.new(nil, "You need to inform a key") if not args[:key] or args[:key].empty?
+
+    method = args[:options]['--method'] || 'read'
+    raise WrongUsage.new(nil, "") unless AVAILABLE_METHODS.include? method
+
+    opts = {}
+    opts.merge!({:secure => args[:options]["--no-ssl"].nil?})
+    opts.merge!({:expires => args[:options]["--expires-in"]}) if args[:options]["--expires-in"]
+    p (args[:s3].buckets[args[:bucket]].objects[args[:key]].url_for method.to_sym, opts).to_s
   end
 
   def Commands._cmd_put args
