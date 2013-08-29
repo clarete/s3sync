@@ -2,6 +2,7 @@ require 's3sync/exceptions'
 require 's3sync/sync'
 require 'aws/s3'
 
+
 module Commands
 
   include S3sync
@@ -107,6 +108,7 @@ module Commands
   end
 
   def Commands._cmd_sync args
-    SyncCommand.new args, ARGV
+    cmd = SyncCommand.new args, *ARGV
+    cmd.run
   end
 end
