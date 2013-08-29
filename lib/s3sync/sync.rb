@@ -271,10 +271,10 @@ module S3sync
     end
 
     def upload_files remote, list
-      puts "Upload"
-
       list.each do |e|
-        puts " * #{e.full} => #{remote}#{e.path}"
+        if @args[:options]["--dry-run"] or @args[:options]["--verbose"]
+          puts " + #{e.full} => #{remote}#{e.path}"
+        end
 
         unless @args[:options]["--dry-run"]
           if File.file? e.path
@@ -285,11 +285,12 @@ module S3sync
     end
 
     def remove_files remote, list
-      puts "Remove"
 
-      list.each {|e|
-        puts " * #{remote}#{e.path}"
-      }
+      if @args[:options]["--dry-run"] or @args[:options]["--verbose"]
+        list.each {|e|
+          puts " - #{remote}#{e.path}"
+        }
+      end
 
       unless @args[:options]["--dry-run"]
         @args[:s3].buckets[remote.bucket].objects.delete_if { |obj| list.include? obj.key }
@@ -297,11 +298,12 @@ module S3sync
     end
 
     def download_files destination, source, list
-      puts "Download"
-
       list.each {|e|
         path = File.join destination.path, e.path
-        puts " * #{source}#{e.path} => #{path}"
+
+        if @args[:options]["--dry-run"] or @args[:options]["--verbose"]
+          puts " + #{source}#{e.path} => #{path}"
+        end
 
         unless @args[:options]["--dry-run"]
           obj = @args[:s3].buckets[source.bucket].objects[e.path]
@@ -320,11 +322,12 @@ module S3sync
     end
 
     def remove_local_files destination, source, list
-      puts "Remove"
-
       list.each {|e|
         path = File.join destination.path, e.path
-        puts " * #{e.path} => #{path}"
+
+        if @args[:options]["--dry-run"] or @args[:options]["--verbose"]
+          puts " * #{e.path} => #{path}"
+        end
 
         unless @args[:options]["--dry-run"]
           FileUtils.rm_rf path
