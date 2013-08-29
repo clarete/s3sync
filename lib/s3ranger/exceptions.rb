@@ -7,7 +7,7 @@
 # code is at your own risk and you waive any claim against the author
 # with respect to your use of this software code.
 
-module S3sync
+module S3Ranger
 
   class SyncException < StandardError
   end

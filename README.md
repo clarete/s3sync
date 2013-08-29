@@ -1,4 +1,4 @@
-# S3sync
+# S3Ranger
 
 TODO: Write a gem description
 
@@ -6,7 +6,7 @@ TODO: Write a gem description
 
 Add this line to your application's Gemfile:
 
-    gem 's3sync'
+    gem 's3ranger'
 
 And then execute:
 
@@ -14,7 +14,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install s3sync
+    $ gem install s3ranger
 
 ## Usage
 

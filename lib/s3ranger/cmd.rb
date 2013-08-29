@@ -9,10 +9,10 @@
 # with respect to your use of this software code.
 
 require 'getoptlong'
-require 's3sync/commands'
-require 's3sync/util'
+require 's3ranger/commands'
+require 's3ranger/util'
 
-module S3sync
+module S3Ranger
 
   class Cmd
 

@@ -2,8 +2,8 @@ Welcome to s3cmd.rb
 -------------------
 This is a ruby program that wraps S3 operations into a simple command-line tool.
 It is inspired by things like rsh3ll, #sh3ll, etc., but shares no code from
-them. It's meant as a companion utility to s3sync.rb but could be used on its
-own (provided you have read the other readme file and know how to use s3sync in
+them. It's meant as a companion utility to s3ranger.rb but could be used on its
+own (provided you have read the other readme file and know how to use s3ranger in
 theory).
 
 I made this even though lots of other "shell"s exist, because I wanted a
@@ -11,16 +11,16 @@ single-operation utility, instead of a shell "environment".  This lends itself
 more to scripting, etc.  Also the delete operation on rsh3ll seems to be borken
 at the moment? =(
 
-Users not yet familiar with s3sync should read about that first, since s3cmd and
-s3sync share a tremendous amount of conventions and syntax. Particularly you
+Users not yet familiar with s3ranger should read about that first, since s3cmd and
+s3ranger share a tremendous amount of conventions and syntax. Particularly you
 have to set up environment variables prior to calling s3cmd, and s3cmd also uses
-the "bucket:key" syntax popularized by s3sync. Many of the options are the same
-too. Really, go read the other readme first if you haven't used s3sync yet.
+the "bucket:key" syntax popularized by s3ranger. Many of the options are the same
+too. Really, go read the other readme first if you haven't used s3ranger yet.
 Otherwise you will become confused.  It's OK, I'll wait.
 
 ....
 
-In general, s3sync and s3cmd complement each other. s3sync is useful to perform
+In general, s3ranger and s3cmd complement each other. s3ranger is useful to perform
 serious synchronization operations, and s3cmd allows you to do simple things
 such as bucket management, listing, transferring single files, and the like.
 
@@ -131,7 +131,7 @@ expects to see).
 ----------
 
 2007-02-19
-- Updated s3try and s3_s3sync_mod to allow SSL_CERT_FILE
+- Updated s3try and s3_s3ranger_mod to allow SSL_CERT_FILE
 ----------
 
 2007-2-25

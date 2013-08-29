@@ -2,16 +2,16 @@
 
 $:.unshift(File.dirname(__FILE__) + '/../lib') unless $:.include?(File.dirname(__FILE__) + '/../lib')
 
-require "s3sync/exceptions"
-require "s3sync/config"
-require "s3sync/cmd"
+require "s3ranger/exceptions"
+require "s3ranger/config"
+require "s3ranger/cmd"
 
-conf = S3sync::Config.new
+conf = S3Ranger::Config.new
 
 # Time to load config and see if we've got everything we need to cook our salad
 begin
   conf.read
-rescue S3sync::NoConfigFound => exc
+rescue S3Ranger::NoConfigFound => exc
   # We can't proceed without having those two vars set
   if not (conf.has_key? "AWS_ACCESS_KEY_ID" and conf.has_key? "AWS_SECRET_ACCESS_KEY")
     $stderr.puts "You didn't set up your environment variables :("
@@ -19,7 +19,7 @@ rescue S3sync::NoConfigFound => exc
     exc.paths_checked.each {|path| $stderr.puts " * #{path}/s3config.yml"}
 
     $stderr.puts "You could try to set the `S3CONF' environment variable."
-    $stderr.puts "Learn how to do that here: https://github.com/clarete/s3sync"
+    $stderr.puts "Learn how to do that here: https://github.com/clarete/s3ranger"
     exit
   end
 end
@@ -29,13 +29,13 @@ end
 # environment to run the requested command. And feed the user back if
 # information needed was not enough
 begin
-  S3sync::Cmd.new(conf)
+  S3Ranger::Cmd.new(conf)
 
-rescue S3sync::FailureFeedback => exc
+rescue S3Ranger::FailureFeedback => exc
   $stderr.puts exc.message
   exit 1
 
-rescue S3sync::WrongUsage => exc
+rescue S3Ranger::WrongUsage => exc
   name = $0.split('/').last
 
   $stderr.puts <<"ENDUSAGE"

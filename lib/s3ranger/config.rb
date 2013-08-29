@@ -9,10 +9,10 @@
 # modified to search out the yaml in several places, thanks wkharold.
 
 require 'yaml'
-require 's3sync/exceptions'
+require 's3ranger/exceptions'
 
 
-module S3sync
+module S3Ranger
 
   class Config < Hash
     def read

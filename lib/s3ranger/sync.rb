@@ -8,10 +8,10 @@
 # code is at your own risk and you waive any claim against the author
 # with respect to your use of this software code.
 
-require 's3sync/util'
+require 's3ranger/util'
 require 'fileutils'
 
-module S3sync
+module S3Ranger
 
   class Location
     attr_accessor :path
@@ -55,7 +55,7 @@ module S3sync
     end
 
     def full
-      S3sync.safe_join [@base, @path]
+      S3Ranger.safe_join [@base, @path]
     end
 
     def == other

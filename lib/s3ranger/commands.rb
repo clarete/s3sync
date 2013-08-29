@@ -1,11 +1,11 @@
-require 's3sync/exceptions'
-require 's3sync/sync'
+require 's3ranger/exceptions'
+require 's3ranger/sync'
 require 'aws/s3'
 
 
 module Commands
 
-  include S3sync
+  include S3Ranger
 
   AVAILABLE_ACLS = [:public_read, :public_read_write, :private]
 
@@ -82,7 +82,7 @@ module Commands
     raise WrongUsage.new(nil, "You need to inform a file") if not args[:file]
 
     # key + file name
-    name = S3sync.safe_join [args[:key], File.basename(args[:file])]
+    name = S3Ranger.safe_join [args[:key], File.basename(args[:file])]
     args[:s3].buckets[args[:bucket]].objects[name].write Pathname.new(args[:file])
   end
 
@@ -94,7 +94,7 @@ module Commands
     # Saving the content to be downloaded to the current directory if the
     # destination is a directory
     path = File.absolute_path args[:file]
-    path = S3sync.safe_join [path, File.basename(args[:key])] if File.directory? path
+    path = S3Ranger.safe_join [path, File.basename(args[:key])] if File.directory? path
 
     File.open(path, 'wb') do |f|
       begin

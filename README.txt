@@ -1,4 +1,4 @@
-Welcome to s3sync.rb
+Welcome to s3ranger.rb
 --------------------
 Home page, wiki, forum, bug reports, etc: http://s3sync.net
 
@@ -7,19 +7,19 @@ directory and an S3 bucket:prefix. It behaves somewhat, but not precisely, like
 the rsync program. In particular, it shares rsync's peculiar behavior that
 trailing slashes on the source side are meaningful. See examples below.
 
-One benefit over some other comparable tools is that s3sync goes out of its way
-to mirror the directory structure on S3.  Meaning you don't *need* to use s3sync
+One benefit over some other comparable tools is that s3ranger goes out of its way
+to mirror the directory structure on S3.  Meaning you don't *need* to use s3ranger
 later in order to view your files on S3.  You can just as easily use an S3
 shell, a web browser (if you used the --public-read option), etc.  Note that
-s3sync is NOT necessarily going to be able to read files you uploaded via some
+s3ranger is NOT necessarily going to be able to read files you uploaded via some
 other tool.  This includes things uploaded with the old perl version!  For best
 results, start fresh!
 
-s3sync runs happily on linux, probably other *ix, and also Windows (except that
+s3ranger runs happily on linux, probably other *ix, and also Windows (except that
 symlinks and permissions management features don't do anything on Windows). If
 you get it running somewhere interesting let me know (see below)
 
-s3sync is free, and license terms are included in all the source files. If you
+s3ranger is free, and license terms are included in all the source files. If you
 decide to make it better, or find bugs, please let me know.
 
 The original inspiration for this tool is the perl script by the same name which
@@ -32,20 +32,20 @@ Examples:
 ---------
 (using S3 bucket 'mybucket' and prefix 'pre')
   Put the local etc directory itself into S3
-        s3sync.rb  -r  /etc  mybucket:pre
+        s3ranger.rb  -r  /etc  mybucket:pre
         (This will yield S3 keys named  pre/etc/...)
   Put the contents of the local /etc dir into S3, rename dir:
-        s3sync.rb  -r  /etc/  mybucket:pre/etcbackup
+        s3ranger.rb  -r  /etc/  mybucket:pre/etcbackup
         (This will yield S3 keys named  pre/etcbackup/...)
   Put contents of S3 "directory" etc into local dir
-        s3sync.rb  -r  mybucket:pre/etc/  /root/etcrestore
+        s3ranger.rb  -r  mybucket:pre/etc/  /root/etcrestore
         (This will yield local files at  /root/etcrestore/...)
   Put the contents of S3 "directory" etc into a local dir named etc
-        s3sync.rb  -r  mybucket:pre/etc  /root
+        s3ranger.rb  -r  mybucket:pre/etc  /root
         (This will yield local files at  /root/etc/...)
   Put S3 nodes under the key pre/etc/ to the local dir etcrestore
   **and create local dirs even if S3 side lacks dir nodes**
-        s3sync.rb  -r  --make-dirs  mybucket:pre/etc/  /root/etcrestore
+        s3ranger.rb  -r  --make-dirs  mybucket:pre/etc/  /root/etcrestore
         (This will yield local files at  /root/etcrestore/...)
 
 
@@ -63,7 +63,7 @@ things), there are apt packages available for ruby and the open ssl lib.
 
 Your environment:
 -----------------
-s3sync needs to know several interesting values to work right.  It looks for
+s3ranger needs to know several interesting values to work right.  It looks for
 them in the following environment variables -or- a s3config.yml file.
 In the yml case, the names need to be lowercase (see example file).
 Furthermore, the yml is searched for in the following locations, in order:
@@ -75,7 +75,7 @@ Required:
 	AWS_ACCESS_KEY_ID
 	AWS_SECRET_ACCESS_KEY
 
-	If you don't know what these are, then s3sync is probably not the
+	If you don't know what these are, then s3ranger is probably not the
 	right tool for you to be starting out with.
 Optional:
 	AWS_S3_HOST - I don't see why the default would ever be wrong
@@ -98,7 +98,7 @@ to REGULAR
 I use "envdir" from the daemontools package to set up my env
 variables easily: http://cr.yp.to/daemontools/envdir.html
 For example:
-	envdir /root/s3sync/env /root/s3sync/s3sync.rb -etc etc etc
+	envdir /root/s3ranger/env /root/s3ranger/s3ranger.rb -etc etc etc
 I know there are other similar tools out there as well.
 
 You can also just call it in a shell script where you have exported the vars
@@ -106,7 +106,7 @@ first such as:
 #!/bin/bash
 export AWS_ACCESS_KEY_ID=valueGoesHere
 ...
-s3sync.rb -etc etc etc
+s3ranger.rb -etc etc etc
 
 But by far the easiest (and newest) way to set this up is to put the name:value
 pairs in a file named s3config.yml and let the yaml parser pick them up. There
@@ -125,7 +125,7 @@ companion utility s3cmd.rb. See README_s3cmd.txt.
 
 About single files
 ------------------
-s3sync lacks the special case code that would be needed in order to handle a
+s3ranger lacks the special case code that would be needed in order to handle a
 source/dest that's a single file. This isn't one of the supported use cases so
 don't expect it to work. You can use the companion utility s3cmd.rb for single
 get/puts.
@@ -137,17 +137,17 @@ In S3 there's no actual concept of folders, just keys and nodes. So, every tool
 uses its own proprietary way of storing dir info (my scheme being the best
 naturally) and in general the methods are not compatible.
 
-If you populate S3 by some means *other than* s3sync and then try to use s3sync
+If you populate S3 by some means *other than* s3ranger and then try to use s3ranger
 to "get" the S3 stuff to a local filesystem, you will want to use the
 --make-dirs option. This causes the local dirs to be created even if there is no
-s3sync-compatible directory node info stored on the S3 side. In other words,
+s3ranger-compatible directory node info stored on the S3 side. In other words,
 local folders are conjured into existence whenever they are needed to make the
 "get" succeed.
 
 
 About MD5 hashes
 ----------------
-s3sync's normal operation is to compare the file size and MD5 hash of each item
+s3ranger's normal operation is to compare the file size and MD5 hash of each item
 to decide whether it needs syncing.  On the S3 side, these hashes are stored and
 returned to us as the "ETag" of each item when the bucket is listed, so it's
 very easy.  On the local side, the MD5 must be calculated by pushing every byte
@@ -188,7 +188,7 @@ using more than one CA.
 
 Getting started:
 ----------------
-Invoke by typing s3sync.rb and you should get a nice usage screen.
+Invoke by typing s3ranger.rb and you should get a nice usage screen.
 Options can be specified in short or long form (except --delete, which has no
 short form)
 
@@ -200,10 +200,10 @@ precious, precious files.
 If you use the --public-read(-p) option, items sent to S3 will be ACL'd so that
 anonymous web users can download them, given the correct URL. This could be
 useful if you intend to publish directories of information for others to see.
-For example, I use s3sync to publish itself to its home on S3 via the following
-command: s3sync.rb -v -p publish/ ServEdge_pub:s3sync Where the files live in a
+For example, I use s3ranger to publish itself to its home on S3 via the following
+command: s3ranger.rb -v -p publish/ ServEdge_pub:s3ranger Where the files live in a
 local folder called "publish" and I wish them to be copied to the URL:
-http://s3.amazonaws.com/ServEdge_pub/s3sync/... If you use --ssl(-s) then your
+http://s3.amazonaws.com/ServEdge_pub/s3ranger/... If you use --ssl(-s) then your
 connections with S3 will be encrypted. Otherwise your data will be sent in clear
 form, i.e. easy to intercept by malicious parties.
 
@@ -215,8 +215,8 @@ cherished and irreplaceable data.
 
 Updates and other discussion:
 -----------------------------
-The latest version of s3sync should normally be at:
-	http://s3.amazonaws.com/ServEdge_pub/s3sync/s3sync.tar.gz
+The latest version of s3ranger should normally be at:
+	http://s3.amazonaws.com/ServEdge_pub/s3ranger/s3ranger.tar.gz
 and the Amazon S3 forums probably have a few threads going on it at any given
 time. I may not always see things posted to the threads, so if you want you can
 contact me at gbs-s3@10forward.com too.
@@ -329,7 +329,7 @@ which we need in order to make some decisios in the local generator.
 prefix.
 - Fixed S3->local when there's no "/" in the source so it doesn't try to create
 a folder with the bucket name.
-- Updated s3try and s3_s3sync_mod to allow SSL_CERT_FILE
+- Updated s3try and s3_s3ranger_mod to allow SSL_CERT_FILE
 ----------
 
 2007-02-22
@@ -346,16 +346,16 @@ Added --progress
 Version 1.1.3
 IMPORTANT!
 Pursuant to http://s3sync.net/forum/index.php?topic=49.0 , the tar.gz now
-expands into its own sub-directory named "s3sync" instead of dumping all the
+expands into its own sub-directory named "s3ranger" instead of dumping all the
 files into the current directory.
 
 In the case of commands of the form:
-	s3sync -r somedir somebucket:
+	s3ranger -r somedir somebucket:
 The root directory node in s3 was being stored as "somedir/" instead of "somedir"
 which caused restores to mess up when you say:
-	s3sync -r somebucket: restoredir
+	s3ranger -r somebucket: restoredir
 The fix to this, by coincidence, actually makes s3fox work even *less* well with
-s3sync.  I really need to build my own xul+javascript s3 GUI some day.
+s3ranger.  I really need to build my own xul+javascript s3 GUI some day.
 
 Also fixed some of the NoMethodError stuff for when --progress is used
 and caught Errno::ETIMEDOUT

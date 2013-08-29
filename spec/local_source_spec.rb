@@ -1,7 +1,7 @@
 require 'spec_helper.rb'
-require 's3sync/sync'
+require 's3ranger/sync'
 
-include S3sync
+include S3Ranger
 
 
 describe "Local file system IO" do
