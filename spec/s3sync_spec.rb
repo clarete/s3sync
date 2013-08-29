@@ -112,13 +112,13 @@ describe "Comparing file lists" do
   it "should be possible to describe nodes with their paths and size" do
 
     # Full test
-    node = Node.new("path//to", "file1", 10)
+    node = Node.new "path//to", "file1", 10
     node.path.should be_eql "file1"
     node.full.should be_eql "path/to/file1"
     node.size.should be_eql 10
 
     # Alternative constructor scenarios
-    node = Node.new("", "file1", 10)
+    node = Node.new "", "file1", 10
     node.path.should be_eql "file1"
   end
 

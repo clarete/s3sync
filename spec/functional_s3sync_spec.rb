@@ -28,4 +28,28 @@ describe "Local file system IO" do
     rm destination
   end
 
+  it "should skip local folders while listing files" do
+    # Given that I have remote source and a local destination with files
+    source = "mybucket:path"
+    destination = directory "directory2"
+    file destination, "file1.txt", "First file"
+    file destination, "file2.txt", "Second file"
+
+    # And with a sub-directory
+    subdir = directory "directory2/subd"
+    file subdir, "sub1.txt", "Sub content"
+
+    # When I create a new local directory based on that path
+    local = LocalDirectory.new destination
+
+    # Then I see that the directory nodes contain both their parent paths and
+    # their names
+    local.list_files.should be_eql [
+      Node.new(fixture("directory2"), "file1.txt", 10),
+      Node.new(fixture("directory2"), "file2.txt", 11),
+      Node.new(fixture("directory2"), "subd/sub1.txt", 11),
+    ]
+
+    rm destination
+  end
 end

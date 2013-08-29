@@ -55,6 +55,7 @@ module S3sync
         ['--method',     '-m', GetoptLong::REQUIRED_ARGUMENT],
         ['--exclude',    '-e', GetoptLong::REQUIRED_ARGUMENT],
         ['--keep',       '-k', GetoptLong::NO_ARGUMENT],
+        ['--dry-run',    '-d', GetoptLong::NO_ARGUMENT],
         ['--no-ssl',           GetoptLong::NO_ARGUMENT],
         ['--expires-in',       GetoptLong::REQUIRED_ARGUMENT],
       ]

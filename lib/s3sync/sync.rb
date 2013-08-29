@@ -55,7 +55,7 @@ module S3sync
     end
 
     def full
-      File.join @base, @path
+      S3sync.safe_join [@base, @path]
     end
 
     def == other
@@ -84,10 +84,12 @@ module S3sync
 
     def list_files
       Dir["#{@source}/**/*"].collect { |file|
-        file = Pathname.new(file).cleanpath.to_s
-        file_name = file.gsub(/^#{@source}\/?/, '')
-        Node.new @source, file_name, File.stat(file).size
-      }
+        unless File.directory? file
+          file = Pathname.new(file).cleanpath.to_s
+          file_name = file.gsub(/^#{@source}\/?/, '')
+          Node.new @source, file_name, File.stat(file).size
+        end
+      }.compact
     end
   end
 
@@ -142,19 +144,14 @@ module S3sync
         end
       } if @args[:options]["--exclude"]
 
-      # Amazon doesn't list folders separately, so when the source is remote,
-      # we have to remove all non-empty folders from the `to_remove` list
-      to_remove.select! {|d|
-        d if Dir[d.full].entries.count.zero?
-      }
-
-      # if source.local?
-      #   upload_files destination, source, to_add
-      #   remove_files destination, to_remove unless @args[:options]["--keep"]
-      # else
-      #   download_files destination, source, to_add
-      #   remove_local_files destination, source, to_remove unless @args[:options]["--keep"]
-      # end
+      # Calling the methods that perform the actual IO
+      if source.local?
+        upload_files destination, to_add
+        remove_files destination, to_remove unless @args[:options]["--keep"]
+      else
+        download_files destination, source, to_add
+        remove_local_files destination, source, to_remove unless @args[:options]["--keep"]
+      end
     end
 
     def SyncCommand.parse_params args
@@ -217,6 +214,12 @@ module S3sync
       # don't repeat slashes
       source.squeeze! '/'
       destination.squeeze! '/'
+
+      # Making sure that local paths won't break our stuff later
+      source.gsub! /^\.\//, ''
+      destination.gsub! /^\.\//, ''
+
+      # Parsing the final destination
       destination = SyncCommand.process_file_destination source, destination, ""
 
       # here's where we find out what direction we're going
@@ -267,13 +270,17 @@ module S3sync
       [source_tree, destination_tree]
     end
 
-    def upload_files remote, local, list
+    def upload_files remote, list
       puts "Upload"
 
       list.each do |e|
-        path = SyncCommand.process_file_destination source.path, destination.path, e.path
-        puts " * #{e.path} => #{path}"
-        # @args[:s3].buckets[remote.bucket].objects[e.path].write(Pathname.new e.path) if File.file? e.path
+        puts " * #{e.full} => #{remote}#{e.path}"
+
+        unless @args[:options]["--dry-run"]
+          if File.file? e.path
+            @args[:s3].buckets[remote.bucket].objects[e.path].write Pathname.new e.path
+          end
+        end
       end
     end
 
@@ -281,30 +288,32 @@ module S3sync
       puts "Remove"
 
       list.each {|e|
-        puts " * #{remote.bucket}:#{e.path}"
+        puts " * #{remote}#{e.path}"
       }
 
-      @args[:s3].buckets[remote.bucket].objects.delete_if { |obj| list.include? obj.key }
+      unless @args[:options]["--dry-run"]
+        @args[:s3].buckets[remote.bucket].objects.delete_if { |obj| list.include? obj.key }
+      end
     end
 
     def download_files destination, source, list
       puts "Download"
 
       list.each {|e|
-        name = e
+        path = File.join destination.path, e.path
+        puts " * #{source}#{e.path} => #{path}"
 
-        # Removing the base path informed by the user
-        path = SyncCommand.process_file_destination source.path, destination.path, e.path
-        puts " * #{e.path} => #{path}"
-        obj = @args[:s3].buckets[source.bucket].objects[e.path]
+        unless @args[:options]["--dry-run"]
+          obj = @args[:s3].buckets[source.bucket].objects[e.path]
 
-        # Making sure this new file will have a safe shelter
-        FileUtils.mkdir_p File.dirname(path)
+          # Making sure this new file will have a safe shelter
+          FileUtils.mkdir_p File.dirname(path)
 
-        # Downloading and saving the files
-        File.open(path, 'wb') do |file|
-          obj.read do |chunk|
-            file.write chunk
+          # Downloading and saving the files
+          File.open(path, 'wb') do |file|
+            obj.read do |chunk|
+              file.write chunk
+            end
           end
         end
       }
@@ -314,9 +323,12 @@ module S3sync
       puts "Remove"
 
       list.each {|e|
-        path = SyncCommand.process_file_destination source.path, destination.path, e.path
+        path = File.join destination.path, e.path
         puts " * #{e.path} => #{path}"
-        FileUtils.rm_rf File.join(destination.path, e.path)
+
+        unless @args[:options]["--dry-run"]
+          FileUtils.rm_rf path
+        end
       }
     end
   end
