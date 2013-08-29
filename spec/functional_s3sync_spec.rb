@@ -1,0 +1,31 @@
+require 'spec_helper.rb'
+require 's3sync/sync'
+
+include S3sync
+
+
+describe "Local file system IO" do
+
+  it "should list local files" do
+
+    # Given that I have remote source and a local destination with a couple
+    # files
+    source = "mybucket:path"
+    destination = directory "directory2"
+    file destination, "file1.txt", "First file"
+    file destination, "file2.txt", "Second file"
+
+    # When I create a new local directory based on that path
+    local = LocalDirectory.new destination
+
+    # Then I see that the directory nodes contain both their parent paths and
+    # their names
+    local.list_files.should be_eql [
+      Node.new(fixture("directory2"), "file1.txt", 10),
+      Node.new(fixture("directory2"), "file2.txt", 11),
+    ]
+
+    rm destination
+  end
+
+end

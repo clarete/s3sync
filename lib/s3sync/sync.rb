@@ -18,6 +18,7 @@ module S3sync
     attr_accessor :bucket
 
     def initialize path, bucket=nil
+      raise RuntimeError if path.nil?
       @path = path
       @bucket = bucket || nil
     end
@@ -43,18 +44,22 @@ module S3sync
   class Node
     include Comparable
 
-    attr_accessor :relative_path
+    attr_accessor :base
     attr_accessor :path
     attr_accessor :size
 
-    def initialize relative_path, path, size
-      @relative_path = relative_path
-      @path = path
+    def initialize base, path, size
+      @base = base.squeeze '/'
+      @path = path.squeeze '/'
       @size = size
     end
 
+    def full
+      File.join @base, @path
+    end
+
     def == other
-      @path == other.path and @size == other.size
+      full == other.full and @size == other.size
     end
 
     def <=> other
@@ -70,11 +75,27 @@ module S3sync
     alias eql? ==
   end
 
+  class LocalDirectory
+    attr_accessor :source
+
+    def initialize source
+      @source = source
+    end
+
+    def list_files
+      Dir["#{@source}/**/*"].collect { |file|
+        file = Pathname.new(file).cleanpath.to_s
+        file_name = file.gsub(/^#{@source}\/?/, '')
+        Node.new @source, file_name, File.stat(file).size
+      }
+    end
+  end
+
   class SyncCommand
 
     def SyncCommand.cmp list1, list2
-      l1 = {}; list1.each {|e| l1[e.relative_path] = e}
-      l2 = {}; list2.each {|e| l2[e.relative_path] = e}
+      l1 = {}; list1.each {|e| l1[e.path] = e}
+      l2 = {}; list2.each {|e| l2[e.path] = e}
 
       same, to_add_to_2, to_remove_from_2 = [], [], []
 
@@ -107,8 +128,7 @@ module S3sync
       end
 
       # Getting the trees
-      source_tree = read_tree source
-      destination_tree = read_tree destination
+      source_tree, destination_tree = read_trees source, destination
 
       # Getting the list of resources to be exchanged between the two peers
       _, to_add, to_remove = SyncCommand.cmp source_tree, destination_tree
@@ -116,19 +136,25 @@ module S3sync
       # Removing the items matching the exclude pattern if requested
       to_add.select! { |e|
         begin
-          (e.relative_path =~ /#{@args[:options]["--exclude"]}/).nil?
+          (e.path =~ /#{@args[:options]["--exclude"]}/).nil?
         rescue RegexpError => exc
           raise WrongUsage.new nil, exc.message
         end
       } if @args[:options]["--exclude"]
 
-      if source.local?
-        upload_files destination, source, to_add
-        remove_files destination, to_remove unless @args[:options]["--keep"]
-      else
-        download_files destination, source, to_add
-        remove_local_files destination, source, to_remove unless @args[:options]["--keep"]
-      end
+      # Amazon doesn't list folders separately, so when the source is remote,
+      # we have to remove all non-empty folders from the `to_remove` list
+      to_remove.select! {|d|
+        d if Dir[d.full].entries.count.zero?
+      }
+
+      # if source.local?
+      #   upload_files destination, source, to_add
+      #   remove_files destination, to_remove unless @args[:options]["--keep"]
+      # else
+      #   download_files destination, source, to_add
+      #   remove_local_files destination, source, to_remove unless @args[:options]["--keep"]
+      # end
     end
 
     def SyncCommand.parse_params args
@@ -153,7 +179,36 @@ module S3sync
     def SyncCommand.remote_prefix?(prefix)
       # allow for dos-like things e.g. C:\ to be treated as local even with
       # colon.
-      prefix.include?(':') and not prefix.match('^[A-Za-z]:[\\\\/]')
+      prefix.include? ':' and not prefix.match '^[A-Za-z]:[\\\\/]'
+    end
+
+    def SyncCommand.process_file_destination source, destination, file=""
+      if not file.empty?
+        sub = (remote_prefix? source) ? source.split(":")[1] : source
+        file = file.gsub /^#{sub}/, ''
+      end
+
+      # no slash on end of source means we need to append the last src dir to
+      # dst prefix testing for empty isn't good enough here.. needs to be
+      # "empty apart from potentially having 'bucket:'"
+      if source =~ %r{/$}
+        File.join [destination, file]
+      else
+        if remote_prefix? source
+          _, name = source.split ":"
+          File.join [destination, File.basename(name || ""), file]
+        else
+          source = /^\/?(.*)/.match(source)[1]
+
+          # Corner case: the root of the remote path is empty, we don't want to
+          # add an unnecessary slash here.
+          if destination.end_with? ':'
+            File.join [destination + source, file]
+          else
+            File.join [destination, source, file]
+          end
+        end
+      end
     end
 
     def SyncCommand.process_destination source, destination
@@ -162,6 +217,7 @@ module S3sync
       # don't repeat slashes
       source.squeeze! '/'
       destination.squeeze! '/'
+      destination = SyncCommand.process_file_destination source, destination, ""
 
       # here's where we find out what direction we're going
       source_is_s3 = remote_prefix? source
@@ -172,63 +228,51 @@ module S3sync
       local_prefix = source_is_s3 ? destination : source
 
       # canonicalize the S3 stuff
-      bucket = /^(.*?):/.match(remote_prefix)[1]
-      remote_prefix.replace(/:(.*)$/.match(remote_prefix)[1])
-
-      # no slash on end of source means we need to append the last src dir to
-      # dst prefix testing for empty isn't good enough here.. needs to be
-      # "empty apart from potentially having 'bucket:'"
-      if source =~ %r{/$}
-        final_destination = File.join [destination, ""]
-      else
-        final_destination =
-          if source_is_s3
-            File.join [destination, File.basename(source), ""]
-          else
-            File.join [destination, source, ""]
-          end
-      end
+      bucket, remote_prefix = remote_prefix.split ":"
+      remote_prefix ||= ""
 
       # Just making sure we preserve the direction
       if source_is_s3
-        [[source, bucket], final_destination]
+        [[remote_prefix, bucket], destination]
       else
-        [source, [final_destination, bucket]]
+        [source, [remote_prefix, bucket]]
       end
     end
 
-    def read_tree location
-      if location.local?
-        Dir.glob("#{location.path}/**/*").collect { |i|
-          file = i.squeeze! '/'
-          name = File.join (file.split "/") - (location.path.split "/")
-          Node.new(name, file, File.stat(file).size)
+    def read_tree_remote location
+      begin
+        dir = location.path
+        dir += '/' if not (dir.empty? or dir.end_with? '/')
+        @args[:s3].buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect {|obj|
+          Node.new location.path, obj.key, obj.content_length
         }
-      else
-        begin
-          dir = location.path
-          dir += '/' if not dir.end_with? '/'
-          l = @args[:s3].buckets[location.bucket].objects.with_prefix(dir || "")
-          l.to_a.collect {|i|
-            name = File.join (i.key.split "/") - (location.path.split "/")
-            Node.new(name, i.key, i.content_length)
-          }
-        rescue AWS::S3::Errors::NoSuchBucket
-          raise FailureFeedback.new("There's no bucket named `#{location.bucket}'")
-        rescue AWS::S3::Errors::NoSuchKey
-          raise FailureFeedback.new("There's no key named `#{location.path}' in the bucket `#{location.bucket}'")
-        rescue AWS::S3::Errors::AccessDenied
-          raise FailureFeedback.new("Access denied")
-        end
+      rescue AWS::S3::Errors::NoSuchBucket
+        raise FailureFeedback.new("There's no bucket named `#{location.bucket}'")
+      rescue AWS::S3::Errors::NoSuchKey
+        raise FailureFeedback.new("There's no key named `#{location.path}' in the bucket `#{location.bucket}'")
+      rescue AWS::S3::Errors::AccessDenied
+        raise FailureFeedback.new("Access denied")
       end
+    end
+
+    def read_trees source, destination
+      if source.local?
+        source_tree = LocalDirectory.new(source.path).list_files
+        destination_tree = read_tree_remote destination
+      else
+        source_tree = read_tree_remote source
+        destination_tree = LocalDirectory.new(destination.path).list_files
+      end
+
+      [source_tree, destination_tree]
     end
 
     def upload_files remote, local, list
       puts "Upload"
 
       list.each do |e|
-        path = File.join local.path, e.relative_path
-        puts " * #{e.relative_path} => #{path}"
+        path = SyncCommand.process_file_destination source.path, destination.path, e.path
+        puts " * #{e.path} => #{path}"
         # @args[:s3].buckets[remote.bucket].objects[e.path].write(Pathname.new e.path) if File.file? e.path
       end
     end
@@ -237,11 +281,10 @@ module S3sync
       puts "Remove"
 
       list.each {|e|
-        path = File.join local.path, e.relative_path
-        puts " * #{e.relative_path} => #{path}"
+        puts " * #{remote.bucket}:#{e.path}"
       }
 
-      # @args[:s3].buckets[remote.bucket].objects.delete_if { |obj| list.include? obj.key }
+      @args[:s3].buckets[remote.bucket].objects.delete_if { |obj| list.include? obj.key }
     end
 
     def download_files destination, source, list
@@ -251,19 +294,19 @@ module S3sync
         name = e
 
         # Removing the base path informed by the user
-        path = File.join destination.path, e.relative_path
-        puts " * #{e.relative_path} => #{path}"
+        path = SyncCommand.process_file_destination source.path, destination.path, e.path
+        puts " * #{e.path} => #{path}"
         obj = @args[:s3].buckets[source.bucket].objects[e.path]
 
         # Making sure this new file will have a safe shelter
-        # FileUtils.mkdir_p File.dirname(path)
+        FileUtils.mkdir_p File.dirname(path)
 
         # Downloading and saving the files
-        # File.open(path, 'wb') do |file|
-        #   obj.read do |chunk|
-        #     file.write chunk
-        #   end
-        # end
+        File.open(path, 'wb') do |file|
+          obj.read do |chunk|
+            file.write chunk
+          end
+        end
       }
     end
 
@@ -271,9 +314,9 @@ module S3sync
       puts "Remove"
 
       list.each {|e|
-        path = File.join destination.path, e.relative_path
-        puts " * #{e.relative_path} => #{path}"
-        # FileUtils.rm_rf File.join(destination.path, e.path)
+        path = SyncCommand.process_file_destination source.path, destination.path, e.path
+        puts " * #{e.path} => #{path}"
+        FileUtils.rm_rf File.join(destination.path, e.path)
       }
     end
   end
