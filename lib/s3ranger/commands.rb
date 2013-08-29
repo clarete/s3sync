@@ -53,9 +53,16 @@ module Commands
 
   def Commands._cmd_list args
     raise WrongUsage.new(nil, "You need to inform a bucket") if not args[:bucket]
-    args[:s3].buckets[args[:bucket]].objects.with_prefix(args[:key] || "").each do |object|
-      puts "#{object.key}\t#{object.content_length}\t#{object.last_modified}"
+
+    collection = args[:s3].buckets[args[:bucket]].objects.with_prefix(args[:key] || "")
+
+    if max = args[:options]["--max-entries"]
+      collection = collection.page(:per_page => max)
     end
+
+    collection.each {|object|
+      puts "#{object.key}\t#{object.content_length}\t#{object.last_modified}"
+    }
   end
 
   def Commands._cmd_delete args

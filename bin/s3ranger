@@ -69,6 +69,9 @@ Global Options:
 
   if `prefix' is present, only content under `prefix' will be listed.
 
+  Options:
+    -x <int>, --max-entries <int>
+
 #{name} delete <bucket>:<key>
   Removes `key` from `bucket`
 
