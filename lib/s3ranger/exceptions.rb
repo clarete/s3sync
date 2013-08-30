@@ -14,9 +14,11 @@ module S3Ranger
 
   class NoConfigFound < SyncException
 
+    attr_accessor :missing_vars
     attr_accessor :paths_checked
 
-    def initialize(paths_checked)
+    def initialize missing_vars, paths_checked
+      @missing_vars = missing_vars
       @paths_checked = paths_checked
     end
   end

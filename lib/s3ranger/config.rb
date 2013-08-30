@@ -15,10 +15,15 @@ require 's3ranger/exceptions'
 module S3Ranger
 
   class Config < Hash
-    def read
+
+    REQUIRED_VARS = [:AWS_ACCESS_KEY_ID, :AWS_SECRET_ACCESS_KEY]
+
+    CONFIG_PATHS = ["#{ENV['S3RANGER_PATH']}", "#{ENV['HOME']}/.s3ranger.yml", "/etc/s3ranger.yml"]
+
+    def read_from_file
       paths_checked = []
 
-      ["#{ENV['S3CONF']}", "#{ENV['HOME']}/.s3conf", "/etc/s3conf"].each do |path|
+      CONFIG_PATHS.each do |path|
 
         # Filtering some garbage
         next if path.nil? or path.strip.empty?
@@ -28,16 +33,39 @@ module S3Ranger
 
         # Time for the dirty work, let's parse the config file and feed our
         # internal hash
-        if File.exists?("#{path}/s3config.yml")
-          config = YAML.load_file("#{path}/s3config.yml")
+        if File.exists? path
+          config = YAML.load_file path
           config.each_pair do |key, value|
             self[key.upcase.to_sym] = value
           end
-          return
+          return 
         end
       end
 
-      raise NoConfigFound.new paths_checked
+      return paths_checked
+    end
+
+    def read_from_env
+      REQUIRED_VARS.each do |v|
+        self[v] = ENV[v.to_s] unless ENV[v.to_s].nil?
+      end
+    end
+
+    def read
+      # Reading from file and then trying from env
+      paths_checked = read_from_file
+      read_from_env
+
+      # Checking which variables we have
+      not_found = []
+
+      REQUIRED_VARS.each {|v|
+        not_found << v if self[v].nil?
+      }
+
+      # Cleaning possibly empty env var from CONFIG_PATH
+      paths = (paths_checked || CONFIG_PATHS).select {|e| !e.empty?}
+      raise NoConfigFound.new(not_found, paths) if not_found.count > 0
     end
   end
 end

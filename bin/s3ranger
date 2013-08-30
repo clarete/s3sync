@@ -13,15 +13,26 @@ begin
   conf.read
 rescue S3Ranger::NoConfigFound => exc
   # We can't proceed without having those two vars set
-  if not (conf.has_key? "AWS_ACCESS_KEY_ID" and conf.has_key? "AWS_SECRET_ACCESS_KEY")
-    $stderr.puts "You didn't set up your environment variables :("
-    $stderr.puts "I tried the following paths:"
-    exc.paths_checked.each {|path| $stderr.puts " * #{path}/s3config.yml"}
+  $stderr.puts "You didn't set up the following environment variables:"
+  $stderr.puts
+  exc.missing_vars.each {|var| $stderr.puts "   * #{var}"}
+  $stderr.puts
 
-    $stderr.puts "You could try to set the `S3CONF' environment variable."
-    $stderr.puts "Learn how to do that here: https://github.com/clarete/s3ranger"
-    exit
-  end
+  $stderr.puts "I tried to load a config file from the following paths:"
+  $stderr.puts
+  exc.paths_checked.each {|path| $stderr.puts "   * #{path}"}
+  $stderr.puts
+
+  $stderr.puts "You could try to set the `S3RANGER_PATH' environment variable"
+  $stderr.puts "pointing to a file to be loaded as your config file or just"
+  $stderr.puts "export those variables to your environment like this:"
+  $stderr.puts
+  exc.missing_vars.each {|var|
+    $stderr.puts "    $ export #{var}=<value-provided-by-amazon>"
+  }
+  $stderr.puts
+  $stderr.puts "Learn how to do that here: https://github.com/clarete/s3ranger"
+  exit
 end
 
 # Step aside, the star of this show is here. Let's try to create the
