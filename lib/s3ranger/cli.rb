@@ -213,15 +213,21 @@ module S3Ranger
       def initialize
         super 'url', false, false
 
-        @short_desc = "Generates a url pointing to the given key"
-        @method = 'read'
+        @short_desc = "Generates public urls or authenticated endpoints for the object"
+        @description = "Notice that --method and --public are mutually exclusive"
+        @method = false
+        @public = false
         @secure = true
         @expires_in = false
         @has_prefix = 'required'
 
         self.options = CmdParse::OptionParserWrapper.new do |opt|
-          opt.on("-m", "--method", "Options: #{AVAILABLE_METHODS.join ', '}") {|m|
+          opt.on("-m", "--method=METHOD", "Options: #{AVAILABLE_METHODS.join ', '}") {|m|
             @method = m
+          }
+
+          opt.on("-p", "--public", "Generates a public (not authenticated) URL for the object") {|p|
+            @public = p
           }
 
           opt.on("--no-ssl", "Generate an HTTP link, no HTTPS") {
@@ -249,12 +255,20 @@ module S3Ranger
       def run s3, bucket, key, file, args
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket
         raise WrongUsage.new(nil, "You need to inform a key") if not key
-        raise WrongUsage.new(nil, "Unknown method #{@method}") unless AVAILABLE_METHODS.include? @method
+        raise WrongUsage.new(nil, "Params --method and --public are mutually exclusive") if (@method and @public)
+        if not AVAILABLE_METHODS.include? method = @method || 'read'
+          raise WrongUsage.new(nil, "Unknown method #{method}")
+        end
 
         opts = {}
         opts.merge!({:secure => @secure})
-        opts.merge!({:expires => @expires_in}) if @expires_in
-        puts (s3.buckets[bucket].objects[key].url_for @method.to_sym, opts).to_s
+
+        if @public
+          puts (s3.buckets[bucket].objects[key].public_url opts).to_s
+        else
+          opts.merge!({:expires => @expires_in}) if @expires_in
+          puts (s3.buckets[bucket].objects[key].url_for method.to_sym, opts).to_s
+        end
       end
     end
 
