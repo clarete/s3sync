@@ -1,4 +1,4 @@
-Copyright (c) 2013 Lincoln de Sousa
+Copyright (c) 2013 Lincoln de Sousa <lincoln@clarete.li>
 
 MIT License
 
