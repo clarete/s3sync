@@ -1,3 +1,4 @@
+require 's3ranger/version'
 require 's3ranger/exceptions'
 require 's3ranger/sync'
 require 'aws/s3'
