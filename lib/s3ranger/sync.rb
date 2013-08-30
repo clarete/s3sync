@@ -138,19 +138,19 @@ module S3Ranger
       # Removing the items matching the exclude pattern if requested
       to_add.select! { |e|
         begin
-          (e.path =~ /#{@args[:options]["--exclude"]}/).nil?
+          (e.path =~ /#{@args.exclude}/).nil?
         rescue RegexpError => exc
           raise WrongUsage.new nil, exc.message
         end
-      } if @args[:options]["--exclude"]
+      } if @args.exclude
 
       # Calling the methods that perform the actual IO
       if source.local?
         upload_files destination, to_add
-        remove_files destination, to_remove unless @args[:options]["--keep"]
+        remove_files destination, to_remove unless @args.keep
       else
         download_files destination, source, to_add
-        remove_local_files destination, source, to_remove unless @args[:options]["--keep"]
+        remove_local_files destination, source, to_remove unless @args.keep
       end
     end
 
@@ -246,7 +246,7 @@ module S3Ranger
       begin
         dir = location.path
         dir += '/' if not (dir.empty? or dir.end_with? '/')
-        @args[:s3].buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect {|obj|
+        @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect {|obj|
           Node.new location.path, obj.key, obj.content_length
         }
       rescue AWS::S3::Errors::NoSuchBucket
@@ -272,13 +272,13 @@ module S3Ranger
 
     def upload_files remote, list
       list.each do |e|
-        if @args[:options]["--dry-run"] or @args[:options]["--verbose"]
+        if @args.verbose
           puts " + #{e.full} => #{remote}#{e.path}"
         end
 
-        unless @args[:options]["--dry-run"]
+        unless @args.dry_run
           if File.file? e.path
-            @args[:s3].buckets[remote.bucket].objects[e.path].write Pathname.new e.path
+            @args.s3.buckets[remote.bucket].objects[e.path].write Pathname.new e.path
           end
         end
       end
@@ -286,14 +286,14 @@ module S3Ranger
 
     def remove_files remote, list
 
-      if @args[:options]["--dry-run"] or @args[:options]["--verbose"]
+      if @args.verbose
         list.each {|e|
           puts " - #{remote}#{e.path}"
         }
       end
 
-      unless @args[:options]["--dry-run"]
-        @args[:s3].buckets[remote.bucket].objects.delete_if { |obj| list.include? obj.key }
+      unless @args.dry_run
+        @args.s3.buckets[remote.bucket].objects.delete_if { |obj| list.include? obj.key }
       end
     end
 
@@ -301,12 +301,12 @@ module S3Ranger
       list.each {|e|
         path = File.join destination.path, e.path
 
-        if @args[:options]["--dry-run"] or @args[:options]["--verbose"]
+        if @args.verbose
           puts " + #{source}#{e.path} => #{path}"
         end
 
-        unless @args[:options]["--dry-run"]
-          obj = @args[:s3].buckets[source.bucket].objects[e.path]
+        unless @args.dry_run
+          obj = @args.s3.buckets[source.bucket].objects[e.path]
 
           # Making sure this new file will have a safe shelter
           FileUtils.mkdir_p File.dirname(path)
@@ -325,11 +325,11 @@ module S3Ranger
       list.each {|e|
         path = File.join destination.path, e.path
 
-        if @args[:options]["--dry-run"] or @args[:options]["--verbose"]
+        if @args.verbose
           puts " * #{e.path} => #{path}"
         end
 
-        unless @args[:options]["--dry-run"]
+        unless @args.dry_run
           FileUtils.rm_rf path
         end
       }

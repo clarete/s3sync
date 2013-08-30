@@ -1,7 +1,6 @@
 require 'spec_helper.rb'
-require 's3ranger/cmd'
+require 's3ranger/cli'
 require 's3ranger/config'
-require 's3ranger/commands'
 require 's3ranger/sync'
 
 include S3Ranger

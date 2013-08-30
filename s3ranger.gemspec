@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
 
   # Library requirements
   spec.add_dependency "aws-sdk"
+  spec.add_dependency "cmdparse"
 
   # Development requirements
   spec.add_development_dependency "debugger"

@@ -4,7 +4,7 @@ $:.unshift(File.dirname(__FILE__) + '/../lib') unless $:.include?(File.dirname(_
 
 require "s3ranger/exceptions"
 require "s3ranger/config"
-require "s3ranger/cmd"
+require "s3ranger/cli"
 
 conf = S3Ranger::Config.new
 
@@ -24,85 +24,16 @@ rescue S3Ranger::NoConfigFound => exc
   end
 end
 
-
 # Step aside, the star of this show is here. Let's try to create the
 # environment to run the requested command. And feed the user back if
 # information needed was not enough
 begin
-  S3Ranger::Cmd.new(conf)
-
+  S3Ranger::CLI::run conf
 rescue S3Ranger::FailureFeedback => exc
   $stderr.puts exc.message
   exit 1
-
 rescue S3Ranger::WrongUsage => exc
   name = $0.split('/').last
-
-  $stderr.puts <<"ENDUSAGE"
-Usage: #{name} [options] <command> [arg(s)]
-
-Global Options:
-  -h, --help
-  -v, --verbose
-  -n, --dryrun
-  -d, --debug
-      --progress
-
-#{name} listbuckets
-  List all available buckets
-
-#{name} createbucket <bucket>
-  Creates a new bucket
-
-  Options:
-
-    -a <ACL>, --acl=(private|public_read|public_read_write)
-
-#{name} deletebucket [options] <bucket>
-  Removes an existing bucket
-
-  Options:
-    -f, --force  Deletes non-empty buckets (BE CAREFUL)
-
-#{name} list <bucket>[:prefix]
-  List content inside of bucket
-
-  if `prefix' is present, only content under `prefix' will be listed.
-
-  Options:
-    -x <int>, --max-entries <int>
-
-#{name} delete <bucket>:<key>
-  Removes `key` from `bucket`
-
-#{name} url [options] <bucket>:<key>
-  Generates a presigned URL for an operation on the object named `key' found on
-  `bucket'.
-
-  Options:
-    --no-ssl
-    --expires-in=(<# of seconds> | [#d|#h|#m|#s])
-
-#{name} get <bucket>:<key> <file>
-  Retrieves the remote `key` object from `bucket` and saves to the local path
-  specified in `file`
-
-#{name} put <bucket>[:<key>] <file>
-  Uploads the file `file` to the `bucket` under the path `key`
-
-#{name} sync <source> <destination>
-
-  One of source or destination must be remote and the other must be local,
-  where local points to a folder in the file system and remote conform to the
-  format `<bucket>[:<key>]`.
-
-  Options:
-    -e <pattern>, --exclude=<pattern>
-    -k, --keep
-    -d, --dry-run
-
-ENDUSAGE
-
-  $stderr.puts "\nCurrent error:\n  #{exc.msg}\n" if exc.msg
+  $stderr.puts "Error:\n  #{exc.msg}\n" if exc.msg
   exit exc.error_code
 end
