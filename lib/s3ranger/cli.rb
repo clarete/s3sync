@@ -154,11 +154,17 @@ module S3Ranger
 
         @max_entries = 0
 
+        @delimiter = "\t"
+
         @has_prefix = true
 
         self.options = CmdParse::OptionParserWrapper.new do |opt|
           opt.on("-m", "--max-entries=NUM", "Limit the number of entries to output") {|m|
             @max_entries = m
+          }
+
+          opt.on("-d", "--delimiter=D", "Charactere used to separate columns") {|d|
+            @delimiter = d
           }
         end
       end
@@ -173,7 +179,13 @@ module S3Ranger
         end
 
         collection.each {|object|
-          puts "#{object.key}\t#{object.content_length}\t#{object.last_modified}"
+          o = []
+          o << object.key
+          o << @delimiter
+          o << object.content_length
+          o << @delimiter
+          o << object.last_modified
+          puts o.join
         }
       end
     end
