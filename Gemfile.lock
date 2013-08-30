@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    s3ranger (0.2.1)
+    s3ranger (0.3.0)
       aws-sdk
       cmdparse
 
