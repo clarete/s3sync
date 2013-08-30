@@ -14,6 +14,8 @@ module S3Ranger
     class ListBuckets < CmdParse::Command
       def initialize
         super 'listbuckets', false, false, false
+
+        @short_desc = "List all available buckets for your user"
       end
 
       def run s3, bucket, key, file, args
@@ -28,6 +30,8 @@ module S3Ranger
 
       def initialize
         super 'createbucket', false, false
+
+        @short_desc = "Create a new bucket under your user account"
 
         @acl = nil
 
@@ -61,6 +65,8 @@ module S3Ranger
       def initialize
         super 'deletebucket', false, false
 
+        @short_desc = "Remove a bucket from your account"
+
         @force = false
 
         self.options = CmdParse::OptionParserWrapper.new do |opt|
@@ -91,10 +97,12 @@ module S3Ranger
       def initialize
         super 'list', false, false
 
+        @short_desc = "List items filed under a given bucket"
+
         @max_entries = 0
 
         self.options = CmdParse::OptionParserWrapper.new do |opt|
-          opt.on("-m", "--max-entries", "Limit the number of entries to output") {|m|
+          opt.on("-m", "--max-entries=NUM", "Limit the number of entries to output") {|m|
             @max_entries = m
           }
         end
@@ -118,6 +126,8 @@ module S3Ranger
     class Delete < CmdParse::Command
       def initialize
         super 'delete', false, false, false
+
+        @short_desc = "Delete a key from a bucket"
       end
 
       def run s3, bucket, key, file, args
@@ -134,6 +144,7 @@ module S3Ranger
       def initialize
         super 'url', false, false
 
+        @short_desc = "Generates a url pointing to the given key"
         @method = 'read'
         @secure = true
         @expires_in = false
@@ -180,6 +191,8 @@ module S3Ranger
     class Put < CmdParse::Command
       def initialize
         super 'put', false, false
+
+        @short_desc = 'Upload a file to a bucket under a certain prefix'
       end
 
       def run s3, bucket, key, file, args
@@ -194,6 +207,7 @@ module S3Ranger
     class Get < CmdParse::Command
       def initialize
         super 'get', false, false
+        @short_desc = "Retrieve an object and save to the specified file"
       end
 
       def run s3, bucket, key, file, args
@@ -221,6 +235,7 @@ module S3Ranger
       def initialize
         super 'sync', false, false
 
+        @short_desc = "Synchronize an S3 and a local folder"
         @s3 = nil
         @exclude = nil
         @keep = false
@@ -257,14 +272,20 @@ module S3Ranger
     def run conf
       cmd = CmdParse::CommandParser.new true
       cmd.program_version = S3Ranger::VERSION
+
       cmd.options = CmdParse::OptionParserWrapper.new do |opt|
         opt.separator "Global options:"
       end
 
-      # Adding the commands we declared above
-      cmd.add_command ListBuckets.new
-      cmd.add_command CreateBucket.new
-      cmd.add_command DeleteBucket.new
+      cmd.main_command.short_desc = 'Tool belt for managing your S3 buckets'
+      cmd.main_command.description = [] \
+        << "Below you have a list of commands will allow you to manage your content" \
+        << "stored in S3 buckets. For more information on each command, you can always" \
+        << "use the `--help' parameter, just like this:" \
+        << "" \
+        << "   $ #{$0} sync --help" \
+
+      # Commands used more often
       cmd.add_command List.new
       cmd.add_command Delete.new
       cmd.add_command Url.new
@@ -272,10 +293,18 @@ module S3Ranger
       cmd.add_command Get.new
       cmd.add_command Sync.new
 
+      # Bucket related options
+      cmd.add_command ListBuckets.new
+      cmd.add_command CreateBucket.new
+      cmd.add_command DeleteBucket.new
+
+
       # Built-in commands
       cmd.add_command CmdParse::HelpCommand.new
       cmd.add_command CmdParse::VersionCommand.new
 
+      # Defining the `execute` method as a closure, so we can forward the
+      # arguments needed to run the instance of the chosen command.
       CmdParse::Command.class_eval do
         define_method :execute, lambda { |args|
 
