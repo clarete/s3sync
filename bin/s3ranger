@@ -68,7 +68,6 @@ rescue S3Ranger::FailureFeedback => exc
   $stderr.puts exc.message
   exit 1
 rescue S3Ranger::WrongUsage => exc
-  name = $0.split('/').last
   $stderr.puts "Error:\n  #{exc.msg}\n" if exc.msg
   exit exc.error_code
 end
