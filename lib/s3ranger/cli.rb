@@ -334,6 +334,7 @@ END
 
     def run conf
       cmd = CmdParse::CommandParser.new true
+      cmd.program_name = File.basename $0
       cmd.program_version = S3Ranger::VERSION
 
       cmd.options = CmdParse::OptionParserWrapper.new do |opt|
@@ -341,13 +342,13 @@ END
       end
 
       cmd.main_command.short_desc = 'Tool belt for managing your S3 buckets'
-      cmd.main_command.description = [] \
-        << "Below you have a list of commands will allow you to manage your content" \
-        << "stored in S3 buckets. For more information on each command, you can always" \
-        << "use the `--help' parameter, just like this:" \
-        << "" \
-        << "   $ #{$0} sync --help"
+      cmd.main_command.description =<<END.strip
+S3Ranger provides a list of commands that will allow you to manage your content
+stored in S3 buckets. To learn about each feature, please use the `help`
+command:
 
+    $ #{File.basename $0} help sync"
+END
       # Commands used more often
       cmd.add_command List.new
       cmd.add_command Delete.new
