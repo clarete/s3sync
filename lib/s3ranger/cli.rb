@@ -332,6 +332,8 @@ module S3Ranger
             raise FailureFeedback.new("There's no bucket named `#{bucket}'")
           rescue AWS::S3::Errors::NoSuchKey
             raise FailureFeedback.new("There's no key named `#{key}' in the bucket `#{bucket}'")
+          rescue AWS::S3::Errors::Base => exc
+            raise FailureFeedback.new("Error: `#{exc.message}'")
           end
         }
       end
