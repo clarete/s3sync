@@ -12,7 +12,35 @@ module S3Ranger
 
     AVAILABLE_METHODS = ['read', 'get', 'put', 'write', 'delete']
 
-    class ListBuckets < CmdParse::Command
+    class BaseCmd < CmdParse::Command
+
+      @has_prefix = false
+
+      def has_options?
+        not options.instance_variables.empty?
+      end
+
+      def has_prefix?
+        @has_prefix
+      end
+
+      def usage
+        u = []
+        u << "Usage: #{File.basename commandparser.program_name} #{name} "
+        u << "[options] " if has_options?
+        u << "bucket" if has_args?
+
+        if has_prefix? == 'required'
+          u << ':prefix'
+        elsif has_prefix?
+          u << "[:prefix]"
+        end
+
+        u.join ''
+      end
+    end
+
+    class ListBuckets < BaseCmd
       def initialize
         super 'listbuckets', false, false, false
 
@@ -26,7 +54,7 @@ module S3Ranger
       end
     end
 
-    class CreateBucket < CmdParse::Command
+    class CreateBucket < BaseCmd
       attr_accessor :acl
 
       def initialize
@@ -60,7 +88,7 @@ module S3Ranger
       end
     end
 
-    class DeleteBucket < CmdParse::Command
+    class DeleteBucket < BaseCmd
       attr_accessor :force
 
       def initialize
@@ -92,7 +120,7 @@ module S3Ranger
       end
     end
 
-    class List < CmdParse::Command
+    class List < BaseCmd
       attr_accessor :max_entries
 
       def initialize
@@ -101,6 +129,8 @@ module S3Ranger
         @short_desc = "List items filed under a given bucket"
 
         @max_entries = 0
+
+        @has_prefix = true
 
         self.options = CmdParse::OptionParserWrapper.new do |opt|
           opt.on("-m", "--max-entries=NUM", "Limit the number of entries to output") {|m|
@@ -124,11 +154,13 @@ module S3Ranger
       end
     end
 
-    class Delete < CmdParse::Command
+    class Delete < BaseCmd
       def initialize
-        super 'delete', false, false, false
+        super 'delete', false, false
 
         @short_desc = "Delete a key from a bucket"
+
+        @has_prefix = 'required'
       end
 
       def run s3, bucket, key, file, args
@@ -138,7 +170,7 @@ module S3Ranger
       end
     end
 
-    class Url < CmdParse::Command
+    class Url < BaseCmd
       attr_accessor :method
       attr_accessor :secure
 
@@ -149,6 +181,7 @@ module S3Ranger
         @method = 'read'
         @secure = true
         @expires_in = false
+        @has_prefix = 'required'
 
         self.options = CmdParse::OptionParserWrapper.new do |opt|
           opt.on("-m", "--method", "Options: #{AVAILABLE_METHODS.join ', '}") {|m|
@@ -189,11 +222,12 @@ module S3Ranger
       end
     end
 
-    class Put < CmdParse::Command
+    class Put < BaseCmd
       def initialize
         super 'put', false, false
 
         @short_desc = 'Upload a file to a bucket under a certain prefix'
+        @has_prefix = true
       end
 
       def run s3, bucket, key, file, args
@@ -205,10 +239,11 @@ module S3Ranger
       end
     end
 
-    class Get < CmdParse::Command
+    class Get < BaseCmd
       def initialize
         super 'get', false, false
         @short_desc = "Retrieve an object and save to the specified file"
+        @has_prefix = 'required'
       end
 
       def run s3, bucket, key, file, args
@@ -226,7 +261,7 @@ module S3Ranger
       end
     end
 
-    class Sync < CmdParse::Command
+    class Sync < BaseCmd
       attr_accessor :s3
       attr_accessor :exclude
       attr_accessor :keep
@@ -244,7 +279,7 @@ module S3Ranger
         @verbose = false
 
         self.options = CmdParse::OptionParserWrapper.new do |opt|
-          opt.on("-x EXPR", "--exclude=EXPR", "") {|v|
+          opt.on("-x EXPR", "--exclude=EXPR", "Skip copying files that matches this pattern. (Ruby REs)") {|v|
             @exclude = v
           }
 
@@ -261,6 +296,33 @@ module S3Ranger
             @verbose = true
           }
         end
+      end
+
+      def usage
+        "Usage: #{File.basename commandparser.program_name} #{name} source destination"
+      end
+
+      def description
+        @description =<<END.strip
+
+Where `source' and `description' might be either local or remote
+addresses. A local address is simply a path in your local file
+system. e.g:
+
+    /tmp/notes.txt
+
+A remote address is a combination of the `bucket` name and
+an optional `prefix`:
+
+    disc.company.com:reports/2013/08/30.html
+
+So, a full example would be something like this
+
+    $ #{File.basename commandparser.program_name} sync Work/reports disc.company.com:reports/2013/08
+
+The above line will update the remote folder `reports/2013/08` with the
+contents of the local folder `Work/reports`.
+END
       end
 
       def run s3, bucket, key, file, args
@@ -284,7 +346,7 @@ module S3Ranger
         << "stored in S3 buckets. For more information on each command, you can always" \
         << "use the `--help' parameter, just like this:" \
         << "" \
-        << "   $ #{$0} sync --help" \
+        << "   $ #{$0} sync --help"
 
       # Commands used more often
       cmd.add_command List.new
@@ -298,7 +360,6 @@ module S3Ranger
       cmd.add_command ListBuckets.new
       cmd.add_command CreateBucket.new
       cmd.add_command DeleteBucket.new
-
 
       # Built-in commands
       cmd.add_command CmdParse::HelpCommand.new
