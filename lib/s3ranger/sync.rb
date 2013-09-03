@@ -208,7 +208,7 @@ module S3Ranger
     def self.process_file_destination source, destination, file=""
       if not file.empty?
         sub = (remote_prefix? source) ? source.split(":")[1] : source
-        file = file.gsub /^#{sub}/, ''
+        file = file.gsub(/^#{sub}/, '')
       end
 
       # no slash on end of source means we need to append the last src dir to
@@ -242,8 +242,8 @@ module S3Ranger
       destination.squeeze! '/'
 
       # Making sure that local paths won't break our stuff later
-      source.gsub! /^\.\//, ''
-      destination.gsub! /^\.\//, ''
+      source.gsub!(/^\.\//, '')
+      destination.gsub!(/^\.\//, '')
 
       # Parsing the final destination
       destination = process_file_destination source, destination, ""
@@ -251,12 +251,8 @@ module S3Ranger
       # here's where we find out what direction we're going
       source_is_s3 = remote_prefix? source
 
-      # alias these variables to the other strings (in ruby = does not make
-      # copies of strings)
-      remote_prefix = source_is_s3 ? source : destination
-      local_prefix = source_is_s3 ? destination : source
-
       # canonicalize the S3 stuff
+      remote_prefix = source_is_s3 ? source : destination
       bucket, remote_prefix = remote_prefix.split ":"
       remote_prefix ||= ""
 
@@ -269,19 +265,11 @@ module S3Ranger
     end
 
     def read_tree_remote location
-      begin
-        dir = location.path
-        dir += '/' if not (dir.empty? or dir.end_with? '/')
-        @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect {|obj|
-          Node.new location.path, obj.key, obj.content_length
-        }
-      rescue AWS::S3::Errors::NoSuchBucket
-        raise FailureFeedback.new("There's no bucket named `#{location.bucket}'")
-      rescue AWS::S3::Errors::NoSuchKey
-        raise FailureFeedback.new("There's no key named `#{location.path}' in the bucket `#{location.bucket}'")
-      rescue AWS::S3::Errors::AccessDenied
-        raise FailureFeedback.new("Access denied")
-      end
+      dir = location.path
+      dir += '/' if not dir.empty? or dir.end_with?('/')
+      @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect {|obj|
+        Node.new location.path, obj.key, obj.content_length
+      }
     end
 
     def read_trees source, destination

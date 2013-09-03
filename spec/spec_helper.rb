@@ -13,7 +13,7 @@ def directory path
 end
 
 def file *args
-  file = File.join *args[0..-2]
+  file = File.join(*args[0..-2])
   directory File.dirname(file)
   File.open(file, 'w') {|f| f.write args[-1] }
   return file

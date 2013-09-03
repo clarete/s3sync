@@ -132,7 +132,7 @@ describe "Comparing file lists" do
 
     # Then I see that the three lists that I requested were returned with the
     # right content
-    same_in_both.should == [Node.new("", "file1", 10)]     # Just testing our == operator
+    same_in_both.should == [Node.new("", "file1", 10)]  # Just testing our == operator
     same_in_both.should be_eql [Node.new("", "file1", 10)]
     to_be_added_to_list2.should be_eql [Node.new("", "file2", 12), Node.new("", "file3", 12)]
     to_be_removed_from_list2.should be_eql [Node.new("", "file4", 22)]

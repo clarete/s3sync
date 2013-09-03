@@ -10,7 +10,6 @@ describe "Local file system IO" do
 
     # Given that I have remote source and a local destination with a couple
     # files
-    source = "mybucket:path"
     destination = directory "directory2"
     file destination, "file1.txt", "First file"
     file destination, "file2.txt", "Second file"
@@ -30,7 +29,6 @@ describe "Local file system IO" do
 
   it "should skip local folders while listing files" do
     # Given that I have remote source and a local destination with files
-    source = "mybucket:path"
     destination = directory "directory2"
     file destination, "file1.txt", "First file"
     file destination, "file2.txt", "Second file"

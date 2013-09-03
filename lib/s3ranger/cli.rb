@@ -111,7 +111,7 @@ module S3Ranger
           end
 
           s3.buckets.create bucket, params
-        rescue AWS::S3::Errors::BucketAlreadyExists => exc
+        rescue AWS::S3::Errors::BucketAlreadyExists
           raise FailureFeedback.new("Bucket `#{bucket}' already exists")
         end
       end
@@ -180,7 +180,7 @@ module S3Ranger
         collection = s3.buckets[bucket].objects.with_prefix(key || "")
 
         if @max_entries > 0
-          collection = collection.page(:per_page => max = @max_entries)
+          collection = collection.page(:per_page => @max_entries)
         end
 
         collection.each {|object|
@@ -241,7 +241,7 @@ module S3Ranger
 
           opt.on("--expires-in=EXPR", "How long the link takes to expire. Format: <# of seconds> | [#d|#h|#m|#s]") { |expr|
             val = 0
-            expr.scan /(\d+\w)/ do |track|
+            expr.scan(/(\d+\w)/) do |track|
               _, num, what = /(\d+)(\w)/.match(track[0]).to_a
               num = num.to_i
 
@@ -269,10 +269,10 @@ module S3Ranger
         opts.merge!({:secure => @secure})
 
         if @public
-          puts (s3.buckets[bucket].objects[key].public_url opts).to_s
+          puts s3.buckets[bucket].objects[key].public_url(opts).to_s
         else
           opts.merge!({:expires => @expires_in}) if @expires_in
-          puts (s3.buckets[bucket].objects[key].url_for method.to_sym, opts).to_s
+          puts s3.buckets[bucket].objects[key].url_for(method.to_sym, opts).to_s
         end
       end
     end
