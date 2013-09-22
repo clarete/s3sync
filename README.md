@@ -78,3 +78,7 @@ The most important options of this command are:
 Reporting bugs and giving any other feedback is highly appreciated. Feel free
 to [create a new issue](https://github.com/clarete/s3ranger/issues/new) if you
 find anything wrong or if you have any ideas to improve the ranger!
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/clarete/s3ranger/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
