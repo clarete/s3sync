@@ -304,7 +304,7 @@ module S3Ranger
 
         unless @args.dry_run
           if File.file? e.path
-            @args.s3.buckets[remote.bucket].objects[e.path].write Pathname.new e.path
+            @args.s3.buckets[remote.bucket].objects[e.path].write Pathname.new(e.path), :acl => @args.acl
           end
         end
       end

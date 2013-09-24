@@ -62,6 +62,15 @@ module S3Ranger
 
         u.join ''
       end
+
+      protected
+
+      def parse_acl(opt)
+        @acl = nil
+        opt.on("-a", "--acl=ACL", "Options: #{AVAILABLE_ACLS.join ', '}") {|acl|
+          @acl = acl.to_sym
+        }
+      end
     end
 
     class ListBuckets < BaseCmd
@@ -86,12 +95,8 @@ module S3Ranger
 
         @short_desc = "Create a new bucket under your user account"
 
-        @acl = nil
-
         self.options = CmdParse::OptionParserWrapper.new do |opt|
-          opt.on("-a", "--acl=ACL", "Options: #{AVAILABLE_ACLS.join ', '}") {|acl|
-            @acl = acl.to_sym
-          }
+          parse_acl(opt)
         end
       end
 
@@ -317,6 +322,7 @@ module S3Ranger
       attr_accessor :keep
       attr_accessor :dry_run
       attr_accessor :verbose
+      attr_accessor :acl
 
       def initialize
         super 'sync', false, false
@@ -336,6 +342,8 @@ module S3Ranger
           opt.on("-k", "--keep", "Keep files even if they don't exist in source") {
             @keep = true
           }
+
+          parse_acl(opt)
 
           opt.on("-d", "--dry-run", "Do not download or exclude anything, just show what was planned. Implies `verbose`.") {
             @dry_run = true
