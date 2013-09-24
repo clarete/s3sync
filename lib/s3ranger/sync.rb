@@ -275,7 +275,7 @@ module S3Ranger
 
     def read_tree_remote location
       dir = location.path
-      dir += '/' if not dir.empty? or dir.end_with?('/')
+      dir += '/' if not dir.empty? and not dir.end_with?('/')
       @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect {|obj|
         Node.new location.path, obj.key, obj.content_length
       }
