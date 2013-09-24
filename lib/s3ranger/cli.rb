@@ -285,6 +285,10 @@ module S3Ranger
         @has_prefix = true
       end
 
+      def usage
+        "#{super} path/to/local/destination"
+      end
+
       def run s3, bucket, key, file, args
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket
         raise WrongUsage.new(nil, "You need to inform a file") if not file
@@ -299,6 +303,10 @@ module S3Ranger
         super 'get', false, false
         @short_desc = "Retrieve an object and save to the specified file"
         @has_prefix = 'required'
+      end
+
+      def usage
+        "#{super} path/to/local/destination"
       end
 
       def run s3, bucket, key, file, args
