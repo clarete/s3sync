@@ -307,7 +307,6 @@ module S3Ranger
     end
 
     def remove_files remote, list
-
       if @args.verbose
         list.each {|e|
           puts " - #{remote}#{e.path}"
@@ -315,7 +314,7 @@ module S3Ranger
       end
 
       unless @args.dry_run
-        @args.s3.buckets[remote.bucket].objects.delete_if { |obj| list.include? obj.key }
+        @args.s3.buckets[remote.bucket].objects.delete_if { |obj| list.map(&:path).include? obj.key }
       end
     end
 
