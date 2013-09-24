@@ -110,11 +110,20 @@ module S3Ranger
 
     def list_files
       Dir["#{@source}/**/*"].collect { |file|
-        unless File.directory? file
-          file = Pathname.new(file).cleanpath.to_s
-          file_name = file.gsub(/^#{@source}\/?/, '')
-          Node.new @source, file_name, File.stat(file).size
+        file = Pathname.new(file).cleanpath.to_s
+        st = File.stat file
+
+        # We don't support following symlinks for now, we don't need to follow
+        # folders and I don't think we care about any other thing, right?
+        next unless st.file?
+
+        # Well, we're kinda out of options right now, I'll just yell!
+        if not st.readable?
+          $stderr.puts "WARNING: Skipping unreadable file #{file}"
+          next
         end
+        file_name = file.gsub(/^#{@source}\/?/, '')
+        Node.new @source, file_name, st.size
       }.compact
     end
   end
