@@ -270,18 +270,23 @@ module S3Ranger
 
     def read_tree_remote location
       begin
-        dir = location.path
-        dir += '/' if not (dir.empty? or dir.end_with? '/')
-        @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect {|obj|
+        dir = location_prefix(location)
+        @args.s3.buckets[location.bucket].objects.with_prefix(dir).to_a.collect {|obj|
           Node.new location.path, obj.key, obj.content_length
         }
       rescue AWS::S3::Errors::NoSuchBucket
         raise FailureFeedback.new("There's no bucket named `#{location.bucket}'")
       rescue AWS::S3::Errors::NoSuchKey
-        raise FailureFeedback.new("There's no key named `#{location.path}' in the bucket `#{location.bucket}'")
+        raise FailureFeedback.new("There's no key named `#{dir}' in the bucket `#{location.bucket}'")
       rescue AWS::S3::Errors::AccessDenied
         raise FailureFeedback.new("Access denied")
       end
+    end
+
+    def location_prefix(location)
+      dir = location.path
+      dir += '/' if not dir.empty? and not dir.end_with? '/'
+      dir
     end
 
     def read_trees source, destination
@@ -298,13 +303,14 @@ module S3Ranger
 
     def upload_files remote, list
       list.each do |e|
+        remote_path = "#{location_prefix(remote)}#{e.path}"
         if @args.verbose
-          puts " + #{e.full} => #{remote}#{e.path}"
+          puts " + #{e.full} => #{remote}#{remote_path}"
         end
 
         unless @args.dry_run
           if File.file? e.path
-            @args.s3.buckets[remote.bucket].objects[e.path].write Pathname.new e.path
+            @args.s3.buckets[remote.bucket].objects[remote_path].write Pathname.new e.path
           end
         end
       end
