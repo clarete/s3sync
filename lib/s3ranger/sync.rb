@@ -121,11 +121,11 @@ module S3Ranger
 
   class SyncCommand
 
-    def SyncCommand.cmp list1, list2
+    def self.cmp list1, list2
       l1 = {}; list1.each {|e| l1[e.path] = e}
       l2 = {}; list2.each {|e| l2[e.path] = e}
 
-      same, to_add_to_2, to_remove_from_2 = [], [], []
+      same, to_add_to_2 = [], []
 
       l1.each do |key, value|
         value2 = l2.delete key
@@ -151,7 +151,7 @@ module S3Ranger
 
     def run
       # Reading the source and destination using our helper method
-      if (source, destination, bucket = SyncCommand.parse_params [@source, @destination]).nil?
+      if (source, destination, bucket = self.class.parse_params [@source, @destination]).nil?
         raise WrongUsage.new(nil, 'Need a source and a destination')
       end
 
@@ -159,7 +159,7 @@ module S3Ranger
       source_tree, destination_tree = read_trees source, destination
 
       # Getting the list of resources to be exchanged between the two peers
-      _, to_add, to_remove = SyncCommand.cmp source_tree, destination_tree
+      _, to_add, to_remove = self.class.cmp source_tree, destination_tree
 
       # Removing the items matching the exclude pattern if requested
       to_add.select! { |e|
@@ -180,32 +180,32 @@ module S3Ranger
       end
     end
 
-    def SyncCommand.parse_params args
+    def self.parse_params args
       # Reading the arbitrary parameters from the command line and getting
       # modifiable copies to parse
       source, destination = args; return nil if source.nil? or destination.nil?
 
       # Sync from one s3 to another is currently not supported
-      if SyncCommand.remote_prefix? source and SyncCommand.remote_prefix? destination
+      if remote_prefix? source and remote_prefix? destination
         raise WrongUsage.new(nil, 'Both arguments can\'t be on S3')
       end
 
       # C'mon, there's rsync out there
-      if !SyncCommand.remote_prefix? source and !SyncCommand.remote_prefix? destination
+      if !remote_prefix? source and !remote_prefix? destination
         raise WrongUsage.new(nil, 'One argument must be on S3')
       end
 
-      source, destination = SyncCommand.process_destination source, destination
+      source, destination = process_destination source, destination
       return [Location.new(*source), Location.new(*destination)]
     end
 
-    def SyncCommand.remote_prefix?(prefix)
+    def self.remote_prefix?(prefix)
       # allow for dos-like things e.g. C:\ to be treated as local even with
       # colon.
       prefix.include? ':' and not prefix.match '^[A-Za-z]:[\\\\/]'
     end
 
-    def SyncCommand.process_file_destination source, destination, file=""
+    def self.process_file_destination source, destination, file=""
       if not file.empty?
         sub = (remote_prefix? source) ? source.split(":")[1] : source
         file = file.gsub /^#{sub}/, ''
@@ -234,7 +234,7 @@ module S3Ranger
       end
     end
 
-    def SyncCommand.process_destination source, destination
+    def self.process_destination source, destination
       source, destination = source.dup, destination.dup
 
       # don't repeat slashes
@@ -246,7 +246,7 @@ module S3Ranger
       destination.gsub! /^\.\//, ''
 
       # Parsing the final destination
-      destination = SyncCommand.process_file_destination source, destination, ""
+      destination = process_file_destination source, destination, ""
 
       # here's where we find out what direction we're going
       source_is_s3 = remote_prefix? source
