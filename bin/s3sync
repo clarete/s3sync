@@ -70,4 +70,7 @@ rescue S3Sync::FailureFeedback => exc
 rescue S3Sync::WrongUsage => exc
   $stderr.puts "Error:\n  #{exc.msg}\n" if exc.msg
   exit exc.error_code
+rescue Interrupt
+  $stderr.puts "Interrupted"
+  exit 1
 end
