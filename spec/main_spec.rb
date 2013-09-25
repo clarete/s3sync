@@ -130,10 +130,14 @@ describe "Comparing file lists" do
       "file3" => Node.new("", "file3", 12),
     }
 
-    list2 = [Node.new("", "file1", 10), Node.new("", "file2", 22), Node.new("", "file4", 22),]
+    hash2 = {
+      "file1" => Node.new("", "file1", 10),
+      "file2" => Node.new("", "file2", 22),
+      "file4" => Node.new("", "file4", 22),
+    }
 
     # When I compare those two file lists
-    same_in_both, to_be_added_to_list2, to_be_removed_from_list2 = SyncCommand.cmp hash1, list2
+    same_in_both, to_be_added_to_list2, to_be_removed_from_list2 = SyncCommand.cmp hash1, hash2
 
     # Then I see that the three lists that I requested were returned with the
     # right content

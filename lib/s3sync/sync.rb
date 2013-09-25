@@ -136,13 +136,11 @@ module S3Sync
 
   class SyncCommand
 
-    def self.cmp list1, list2
-      l2 = {}; list2.each {|e| l2[e.path] = e}
-
+    def self.cmp hash1, hash2
       same, to_add_to_2 = [], []
 
-      list1.each do |key, value|
-        value2 = l2.delete key
+      hash1.each do |key, value|
+        value2 = hash2.delete key
         if value2.nil?
           to_add_to_2 << value
         elsif value2.size == value.size
@@ -152,7 +150,7 @@ module S3Sync
         end
       end
 
-      to_remove_from_2 = l2.values
+      to_remove_from_2 = hash2.values
 
       [same, to_add_to_2, to_remove_from_2]
     end
@@ -281,9 +279,13 @@ module S3Sync
     def read_tree_remote location
       dir = location.path
       dir += '/' if not dir.empty? and not dir.end_with?('/')
-      @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect {|obj|
-        Node.new location.path, obj.key, obj.content_length
-      }
+
+      nodes = {}
+      @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect do |obj|
+        node = Node.new(location.path, obj.key, obj.content_length)
+        nodes[node.path] = node
+      end
+      return nodes
     end
 
     def read_trees source, destination
