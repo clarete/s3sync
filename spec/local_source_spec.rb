@@ -19,10 +19,10 @@ describe "Local file system IO" do
 
     # Then I see that the directory nodes contain both their parent paths and
     # their names
-    local.list_files.should be_eql [
-      Node.new(fixture("directory2"), "file1.txt", 10),
-      Node.new(fixture("directory2"), "file2.txt", 11),
-    ]
+    local.list_files.should be_eql({
+      "file1.txt" => Node.new(fixture("directory2"), "file1.txt", 10),
+      "file2.txt" => Node.new(fixture("directory2"), "file2.txt", 11),
+    })
 
     rm destination
   end
@@ -42,11 +42,11 @@ describe "Local file system IO" do
 
     # Then I see that the directory nodes contain both their parent paths and
     # their names
-    local.list_files.should be_eql [
-      Node.new(fixture("directory2"), "file1.txt", 10),
-      Node.new(fixture("directory2"), "file2.txt", 11),
-      Node.new(fixture("directory2"), "subd/sub1.txt", 11),
-    ]
+    local.list_files.should be_eql({
+      "file1.txt" => Node.new(fixture("directory2"), "file1.txt", 10),
+      "file2.txt" => Node.new(fixture("directory2"), "file2.txt", 11),
+      "subd/sub1.txt" => Node.new(fixture("directory2"), "subd/sub1.txt", 11),
+    })
 
     rm destination
   end

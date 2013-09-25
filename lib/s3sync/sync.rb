@@ -76,8 +76,8 @@ module S3Sync
     attr_accessor :size
 
     def initialize base, path, size
-      @base = base.squeeze '/'
-      @path = path.squeeze '/'
+      @base = base
+      @path = path
       @size = size
     end
 
@@ -110,7 +110,7 @@ module S3Sync
     end
 
     def list_files
-      nodes = []
+      nodes = {}
       Find.find(@source) do |file|
         st = File.stat file
 
@@ -125,8 +125,9 @@ module S3Sync
         end
 
         # We only need the relative path here
-        file_name = file.gsub(/^#{@source}\/?/, '')
-        nodes << Node.new(@source, file_name, st.size)
+        file_name = file.gsub(/^#{@source}\/?/, '').squeeze('/')
+        node = Node.new(@source.squeeze('/'), file_name, st.size)
+        nodes[node.path] = node
       end
 
       return nodes
@@ -136,12 +137,11 @@ module S3Sync
   class SyncCommand
 
     def self.cmp list1, list2
-      l1 = {}; list1.each {|e| l1[e.path] = e}
       l2 = {}; list2.each {|e| l2[e.path] = e}
 
       same, to_add_to_2 = [], []
 
-      l1.each do |key, value|
+      list1.each do |key, value|
         value2 = l2.delete key
         if value2.nil?
           to_add_to_2 << value
