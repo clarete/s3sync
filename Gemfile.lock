@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    s3ranger (0.3.1)
+    s3sync (0.3.1)
       aws-sdk
       cmdparse
 
@@ -49,5 +49,5 @@ DEPENDENCIES
   debugger
   rake
   rspec
-  s3ranger!
+  s3sync!
   simplecov

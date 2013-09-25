@@ -1,45 +1,37 @@
-# S3Ranger
-
-> Watch out, there's a new sheriff in town
-
-*-- Said the waiter while he was polishing a glass*
+# S3Sync
 
 ## Intro
 
 I needed to backup some stuff once when I was in the woods. Unfortunately, I
 didn't find anything easy but elegant enough to sync my stuff with Amazon S3.
 
-The best guy I found was [s3sync](http://s3sync.net), but he was kinda
-abandoned! So I decided to take care of him, I taught him some Kung fu, shown
-him the mountains and he became S3Ranger!
-
-S3Ranger uses the [official aws sdk for ruby](https://github.com/aws/aws-sdk-ruby)
+S3Sync uses the [official aws sdk for ruby](https://github.com/aws/aws-sdk-ruby)
 so we expect it to be stable. The most sensitive parts of the code are tested
 and that only tends to get better, I'm crazy about testing code! :)
 
 ## Installation
 
-    $ gem install s3ranger
+    $ gem install s3sync
 
 ## Usage
 
-S3Range's help command is pretty powerful, so you can get all the help you need
+S3Sync's help command is pretty powerful, so you can get all the help you need
 from him. He's always ready to answer your questions:
 
-    $ s3ranger help [SUBCOMMAND]
+    $ s3sync help [SUBCOMMAND]
 
 If you want to learn more about a specific command, you just need to inform
 the optional [SUBCOMMAND] argument:
 
-    $ s3ranger help sync
+    $ s3sync help sync
 
 ### Managing buckets
 
 The following commands are used to manage buckets themselves
 
-* `s3ranger listbuckets`: Show all available buckets
-* `s3ranger createbucket <name>`: Create a new bucket
-* `s3ranger deletebucket <name> [-f]`: Delete a bucket
+* `s3sync listbuckets`: Show all available buckets
+* `s3sync createbucket <name>`: Create a new bucket
+* `s3sync deletebucket <name> [-f]`: Delete a bucket
 
 ### Managing content
 
@@ -54,7 +46,7 @@ The following commands are used to manage buckets themselves
 If you want to sync up an s3 folder with a local folder (both directions are
 accepted), you can use the `sync` command. e.g.:
 
-    $ s3ranger sync Work/reports disc.company.com:reports/2013/08
+    $ s3sync sync Work/reports disc.company.com:reports/2013/08
 
 The above line will sync the local folder `Work/reports` with the remote node
 `disc.company.com:reports/2013/08`.
@@ -76,9 +68,9 @@ The most important options of this command are:
 ### Feedback
 
 Reporting bugs and giving any other feedback is highly appreciated. Feel free
-to [create a new issue](https://github.com/clarete/s3ranger/issues/new) if you
+to [create a new issue](https://github.com/clarete/s3sync/issues/new) if you
 find anything wrong or if you have any ideas to improve the ranger!
 
 
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/clarete/s3ranger/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/clarete/s3sync/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 

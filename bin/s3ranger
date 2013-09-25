@@ -1,6 +1,6 @@
-#!/usr/bin/env ruby 
+#!/usr/bin/env ruby
 #
-# s3ranger - Tool belt for managing your S3 buckets
+# s3sync - Tool belt for managing your S3 buckets
 #
 # The MIT License (MIT)
 #
@@ -26,16 +26,16 @@
 
 $:.unshift(File.dirname(__FILE__) + '/../lib') unless $:.include?(File.dirname(__FILE__) + '/../lib')
 
-require "s3ranger/exceptions"
-require "s3ranger/config"
-require "s3ranger/cli"
+require "s3sync/exceptions"
+require "s3sync/config"
+require "s3sync/cli"
 
-conf = S3Ranger::Config.new
+conf = S3Sync::Config.new
 
 # Time to load config and see if we've got everything we need to cook our salad
 begin
   conf.read
-rescue S3Ranger::NoConfigFound => exc
+rescue S3Sync::NoConfigFound => exc
   # We can't proceed without having those two vars set
   $stderr.puts "You didn't set up the following environment variables:"
   $stderr.puts
@@ -47,7 +47,7 @@ rescue S3Ranger::NoConfigFound => exc
   exc.paths_checked.each {|path| $stderr.puts "   * #{path}"}
   $stderr.puts
 
-  $stderr.puts "You could try to set the `S3RANGER_PATH' environment variable"
+  $stderr.puts "You could try to set the `S3SYNC_PATH' environment variable"
   $stderr.puts "pointing to a file to be loaded as your config file or just"
   $stderr.puts "export those variables to your environment like this:"
   $stderr.puts
@@ -55,7 +55,7 @@ rescue S3Ranger::NoConfigFound => exc
     $stderr.puts "    $ export #{var}=<value-provided-by-amazon>"
   }
   $stderr.puts
-  $stderr.puts "Learn how to do that here: https://github.com/clarete/s3ranger"
+  $stderr.puts "Learn how to do that here: https://github.com/clarete/s3sync"
   exit
 end
 
@@ -63,11 +63,11 @@ end
 # environment to run the requested command. And feed the user back if
 # information needed was not enough
 begin
-  S3Ranger::CLI::run conf
-rescue S3Ranger::FailureFeedback => exc
+  S3Sync::CLI::run conf
+rescue S3Sync::FailureFeedback => exc
   $stderr.puts exc.message
   exit 1
-rescue S3Ranger::WrongUsage => exc
+rescue S3Sync::WrongUsage => exc
   $stderr.puts "Error:\n  #{exc.msg}\n" if exc.msg
   exit exc.error_code
 end

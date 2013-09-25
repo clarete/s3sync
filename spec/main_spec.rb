@@ -1,9 +1,9 @@
 require 'spec_helper.rb'
-require 's3ranger/cli'
-require 's3ranger/config'
-require 's3ranger/sync'
+require 's3sync/cli'
+require 's3sync/config'
+require 's3sync/sync'
 
-include S3Ranger
+include S3Sync
 
 describe "Parsing command line arguments" do
 
@@ -83,8 +83,8 @@ describe "Parsing command line arguments" do
     src_location, dst_location = SyncCommand.parse_params [source, destination]
 
     # Then I see I got the locations with the right params
-    src_location.should be_eql S3Ranger::Location.new("/etc")
-    dst_location.should be_eql S3Ranger::Location.new("pre/etc/", "mybucket")
+    src_location.should be_eql S3Sync::Location.new("/etc")
+    dst_location.should be_eql S3Sync::Location.new("pre/etc/", "mybucket")
   end
 
   it "Location should be parsed when it is remote with no path" do
@@ -95,8 +95,8 @@ describe "Parsing command line arguments" do
     src_location, dst_location = SyncCommand.parse_params [source, destination]
 
     # Then I see I got the locations with the right params
-    src_location.should be_eql S3Ranger::Location.new("/etc")
-    dst_location.should be_eql S3Ranger::Location.new("etc/", "mybucket")
+    src_location.should be_eql S3Sync::Location.new("/etc")
+    dst_location.should be_eql S3Sync::Location.new("etc/", "mybucket")
   end
 
   it "should be possible to detect if a location is remote" do
