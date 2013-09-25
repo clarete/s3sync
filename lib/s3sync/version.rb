@@ -23,5 +23,5 @@
 # THE SOFTWARE.
 
 module S3Sync
-  VERSION = "0.3.4"
+  VERSION = "2.0.0"
 end
