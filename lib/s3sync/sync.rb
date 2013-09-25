@@ -113,7 +113,8 @@ module S3Sync
       nodes = {}
       Find.find(@source) do |file|
         begin
-          st = File.stat file
+          st = File.stat file        # Might fail
+          raise if not st.readable?  # We're not interested in things we can't read
         rescue
           $stderr.puts "WARNING: Skipping unreadable file #{file}"
           Find.prune
@@ -122,12 +123,6 @@ module S3Sync
         # We don't support following symlinks for now, we don't need to follow
         # folders and I don't think we care about any other thing, right?
         next unless st.file?
-
-        # Well, we're kinda out of options right now, I'll just yell!
-        if not st.readable?
-          $stderr.puts "WARNING: Skipping unreadable file #{file}"
-          Find.prune
-        end
 
         # We only need the relative path here
         file_name = file.gsub(/^#{@source}\/?/, '').squeeze('/')
