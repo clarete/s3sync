@@ -227,7 +227,11 @@ module S3Sync
       # dst prefix testing for empty isn't good enough here.. needs to be
       # "empty apart from potentially having 'bucket:'"
       if source =~ %r{/$}
-        File.join [destination, file]
+        if remote_prefix? destination and destination.end_with? ':'
+          S3Sync.safe_join [destination, file]
+        else
+          File.join [destination, file]
+        end
       else
         if remote_prefix? source
           _, name = source.split ":"
@@ -266,6 +270,7 @@ module S3Sync
       # canonicalize the S3 stuff
       remote_prefix = source_is_s3 ? source : destination
       bucket, remote_prefix = remote_prefix.split ":"
+
       remote_prefix ||= ""
 
       # Just making sure we preserve the direction

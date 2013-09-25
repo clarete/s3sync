@@ -25,6 +25,14 @@ describe "Parsing command line arguments" do
       SyncCommand.process_destination(source, destination).should be_eql ["/etc/", ["pre/etcbackup/", "mybucket"]]
     end
 
+    it "Put the contents of the local /tmp/sync/ in to the root of an S3 bucket" do
+      source = "/tmp/sync/"
+      destination = "mybucket:"
+
+      # This will yield S3 keys named  '...' (The root is just empty)
+      SyncCommand.process_destination(source, destination).should be_eql ["/tmp/sync/", ["", "mybucket"]]
+    end
+
     it "Put contents of S3 \"directory\" etc into local dir" do
       source = "mybucket:pre/etc/"
       destination = "/root/etcrestore"
