@@ -1,4 +1,4 @@
-# s3ranger - Tool belt for managing your S3 buckets
+# s3sync - Tool belt for managing your S3 buckets
 #
 # The MIT License (MIT)
 #
@@ -34,10 +34,10 @@
 # code is at your own risk and you waive any claim against the author
 # with respect to your use of this software code.
 
-require 's3ranger/util'
+require 's3sync/util'
 require 'fileutils'
 
-module S3Ranger
+module S3Sync
 
   class Location
     attr_accessor :path
@@ -81,7 +81,7 @@ module S3Ranger
     end
 
     def full
-      S3Ranger.safe_join [@base, @path]
+      S3Sync.safe_join [@base, @path]
     end
 
     def == other

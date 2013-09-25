@@ -1,4 +1,4 @@
-# s3ranger - Tool belt for managing your S3 buckets
+# s3sync - Tool belt for managing your S3 buckets
 #
 # The MIT License (MIT)
 #
@@ -22,8 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-module S3Ranger
-  def S3Ranger.safe_join(parts)
+module S3Sync
+  def S3Sync.safe_join(parts)
     File.join(*(parts.select {|v| !v.nil? && !v.empty? }))
   end
 end

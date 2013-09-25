@@ -1,1 +1,1 @@
-s3ranger
+s3sync
