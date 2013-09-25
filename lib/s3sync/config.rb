@@ -1,4 +1,4 @@
-# s3ranger - Tool belt for managing your S3 buckets
+# s3sync - Tool belt for managing your S3 buckets
 #
 # The MIT License (MIT)
 #
@@ -36,16 +36,16 @@
 # modified to search out the yaml in several places, thanks wkharold.
 
 require 'yaml'
-require 's3ranger/exceptions'
+require 's3sync/exceptions'
 
 
-module S3Ranger
+module S3Sync
 
   class Config < Hash
 
     REQUIRED_VARS = [:AWS_ACCESS_KEY_ID, :AWS_SECRET_ACCESS_KEY]
 
-    CONFIG_PATHS = ["#{ENV['S3RANGER_PATH']}", "#{ENV['HOME']}/.s3ranger.yml", "/etc/s3ranger.yml"]
+    CONFIG_PATHS = ["#{ENV['S3SYNC_PATH']}", "#{ENV['HOME']}/.s3sync.yml", "/etc/s3sync.yml"]
 
     def read_from_file
       paths_checked = []
@@ -65,7 +65,7 @@ module S3Ranger
           config.each_pair do |key, value|
             self[key.upcase.to_sym] = value
           end
-          return 
+          return
         end
       end
 

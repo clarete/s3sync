@@ -1,4 +1,4 @@
-# s3ranger - Tool belt for managing your S3 buckets
+# s3sync - Tool belt for managing your S3 buckets
 #
 # The MIT License (MIT)
 #
@@ -22,14 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-require 's3ranger/version'
-require 's3ranger/exceptions'
-require 's3ranger/sync'
+require 's3sync/version'
+require 's3sync/exceptions'
+require 's3sync/sync'
 require 'aws/s3'
 require 'cmdparse'
 
 
-module S3Ranger
+module S3Sync
   module CLI
 
     AVAILABLE_ACLS = [:public_read, :public_read_write, :private]
@@ -293,7 +293,7 @@ module S3Ranger
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket
         raise WrongUsage.new(nil, "You need to inform a file") if not file
 
-        name = S3Ranger.safe_join [key, File.basename(file)]
+        name = S3Sync.safe_join [key, File.basename(file)]
         s3.buckets[bucket].objects[name].write Pathname.new(file)
       end
     end
@@ -317,7 +317,7 @@ module S3Ranger
         # Saving the content to be downloaded to the current directory if the
         # destination is a directory
         path = File.absolute_path file
-        path = S3Ranger.safe_join [path, File.basename(key)] if File.directory? path
+        path = S3Sync.safe_join [path, File.basename(key)] if File.directory? path
         File.open(path, 'wb') do |f|
           s3.buckets[bucket].objects[key].read do |chunk| f.write(chunk) end
         end
@@ -401,7 +401,7 @@ END
     def run conf
       cmd = CmdParse::CommandParser.new true
       cmd.program_name = File.basename $0
-      cmd.program_version = S3Ranger::VERSION
+      cmd.program_version = S3Sync::VERSION
 
       cmd.options = CmdParse::OptionParserWrapper.new do |opt|
         opt.separator "Global options:"
@@ -409,7 +409,7 @@ END
 
       cmd.main_command.short_desc = 'Tool belt for managing your S3 buckets'
       cmd.main_command.description =<<END.strip
-S3Ranger provides a list of commands that will allow you to manage your content
+S3Sync provides a list of commands that will allow you to manage your content
 stored in S3 buckets. To learn about each feature, please use the `help`
 command:
 

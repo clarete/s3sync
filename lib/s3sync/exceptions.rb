@@ -1,4 +1,4 @@
-# s3ranger - Tool belt for managing your S3 buckets
+# s3sync - Tool belt for managing your S3 buckets
 #
 # The MIT License (MIT)
 #
@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-module S3Ranger
+module S3Sync
 
   class SyncException < StandardError
   end
