@@ -9,6 +9,19 @@ S3Sync uses the [official aws sdk for ruby](https://github.com/aws/aws-sdk-ruby)
 so we expect it to be stable. The most sensitive parts of the code are tested
 and that only tends to get better, I'm crazy about testing code! :)
 
+### Code maturity
+
+This project started as a fork of the original `s3sync` command that had its
+last release in 2008. After a while it became a complete rewrite which might be
+considered good in a lot of cases, however, it also entails losing the maturity
+that the old code used to have.
+
+To overcome this problem, I invested time writing tests for some of the most
+hairy part of the code: the sync command.
+
+That being said, I believe there must be a couple stupid bugs around and I
+highly appreciate reports and patches (specially if they come with tests).
+
 ## Installation
 
     $ gem install s3sync
