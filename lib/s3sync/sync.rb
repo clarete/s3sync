@@ -34,8 +34,9 @@
 # code is at your own risk and you waive any claim against the author
 # with respect to your use of this software code.
 
-require 's3sync/util'
+require 'find'
 require 'fileutils'
+require 's3sync/util'
 
 module S3Sync
 
@@ -109,8 +110,8 @@ module S3Sync
     end
 
     def list_files
-      Dir["#{@source}/**/*"].collect { |file|
-        file = Pathname.new(file).cleanpath.to_s
+      nodes = []
+      Find.find(@source) do |file|
         st = File.stat file
 
         # We don't support following symlinks for now, we don't need to follow
@@ -122,9 +123,13 @@ module S3Sync
           $stderr.puts "WARNING: Skipping unreadable file #{file}"
           next
         end
+
+        # We only need the relative path here
         file_name = file.gsub(/^#{@source}\/?/, '')
-        Node.new @source, file_name, st.size
-      }.compact
+        nodes << Node.new(@source, file_name, st.size)
+      end
+
+      return nodes
     end
   end
 
