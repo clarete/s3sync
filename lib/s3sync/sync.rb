@@ -346,8 +346,12 @@ module S3Sync
 
           # Downloading and saving the files
           File.open(path, 'wb') do |file|
-            obj.read do |chunk|
-              file.write chunk
+            begin
+              obj.read do |chunk|
+                file.write chunk
+              end
+            rescue AWS::Core::Http::NetHttpHandler::TruncatedBodyError => e
+              retry
             end
           end
         end
