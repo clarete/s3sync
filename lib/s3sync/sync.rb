@@ -351,6 +351,8 @@ module S3Sync
                 file.write chunk
               end
             rescue AWS::Core::Http::NetHttpHandler::TruncatedBodyError => e
+              $stderr.puts "WARNING: (retryable) TruncatedBodyError occured, retrying in a second #{file}"
+              sleep 1
               retry
             end
           end
