@@ -85,5 +85,6 @@ to [create a new issue](https://github.com/clarete/s3sync/issues/new) if you
 find anything wrong or if you have any ideas to improve the ranger!
 
 
+[![instanc.es Badge](https://instanc.es/bin/clarete/s3sync.png)](http://instanc.es)
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/clarete/s3sync/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
