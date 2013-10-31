@@ -331,6 +331,7 @@ module S3Sync
     end
 
     def download_files destination, source, list
+      puts list
       list.each {|e|
         path = File.join destination.path, e.path
 
@@ -344,10 +345,23 @@ module S3Sync
           # Making sure this new file will have a safe shelter
           FileUtils.mkdir_p File.dirname(path)
 
-          # Downloading and saving the files
-          File.open(path, 'wb') do |file|
-            obj.read do |chunk|
-              file.write chunk
+          # in some cases the s3 object will have a trailing '/' indicating
+          # a folder (this behavior noticed when the s3 folder is
+          # created by Transmit)
+          if path[-1] == '/'
+            FileUtils.mkdir_p path
+          else
+            # Downloading and saving the files
+            File.open(path, 'wb') do |file|
+              begin
+                obj.read do |chunk|
+                  file.write chunk
+                end
+              rescue AWS::Core::Http::NetHttpHandler::TruncatedBodyError => e
+                $stderr.puts "WARNING: (retryable) TruncatedBodyError occured, retrying in a second #{file.basename}"
+                sleep 1
+                retry
+              end
             end
           end
         end
