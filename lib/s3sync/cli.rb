@@ -438,10 +438,7 @@ END
         define_method :execute, lambda { |args|
 
           # Connecting to amazon
-          s3 = AWS::S3.new(
-            :access_key_id => conf[:AWS_ACCESS_KEY_ID],
-            :secret_access_key => conf[:AWS_SECRET_ACCESS_KEY]
-          )
+          s3 = AWS::S3.new
 
           # From the command line
           key, file = args
