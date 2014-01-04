@@ -86,10 +86,6 @@ module S3Sync
       # Checking which variables we have
       not_found = []
 
-      REQUIRED_VARS.each {|v|
-        not_found << v if self[v].nil?
-      }
-
       # Cleaning possibly empty env var from CONFIG_PATH
       paths = (paths_checked || CONFIG_PATHS).select {|e| !e.empty?}
       raise NoConfigFound.new(not_found, paths) if not_found.count > 0
