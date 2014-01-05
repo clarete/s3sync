@@ -63,7 +63,7 @@ module S3Sync
         if File.exists? path
           config = YAML.load_file path
           config.each_pair do |key, value|
-            self[key.upcase.to_sym] = value
+            self[key.upcase.to_s] = value
           end
           return
         end
@@ -82,6 +82,9 @@ module S3Sync
       # Reading from file and then trying from env
       paths_checked = read_from_file
       read_from_env
+
+      # Update the environment with the latest values
+      ENV.update(self.to_hash)
 
       # Checking which variables we have
       not_found = []

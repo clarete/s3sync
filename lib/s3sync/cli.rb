@@ -63,6 +63,32 @@ module S3Sync
         u.join ''
       end
 
+      def execute(args)
+        # Connecting to amazon
+        s3 = AWS::S3.new
+
+        # From the command line
+        key, file = args
+
+        # Parsing the bucket name
+        bucket = nil
+        bucket, key = key.split(':') if key
+
+        # Running our custom method inside of the command class, taking care
+        # of the common errors here, saving duplications in each command;
+        begin
+          run s3, bucket, key, file, args
+        rescue AWS::S3::Errors::AccessDenied
+          raise FailureFeedback.new("Access Denied")
+        rescue AWS::S3::Errors::NoSuchBucket
+          raise FailureFeedback.new("There's no bucket named `#{bucket}'")
+        rescue AWS::S3::Errors::NoSuchKey
+          raise FailureFeedback.new("There's no key named `#{key}' in the bucket `#{bucket}'")
+        rescue AWS::S3::Errors::Base => exc
+          raise FailureFeedback.new("Error: `#{exc.message}'")
+        end
+      end
+
       protected
 
       def parse_acl(opt)
@@ -432,37 +458,7 @@ END
       cmd.add_command CmdParse::HelpCommand.new
       cmd.add_command CmdParse::VersionCommand.new
 
-      # Defining the `execute` method as a closure, so we can forward the
-      # arguments needed to run the instance of the chosen command.
-      CmdParse::Command.class_eval do
-        define_method :execute, lambda { |args|
-
-          # Connecting to amazon
-          s3 = AWS::S3.new
-
-          # From the command line
-          key, file = args
-
-          # Parsing the bucket name
-          bucket = nil
-          bucket, key = key.split(':') if key
-
-          # Running our custom method inside of the command class, taking care
-          # of the common errors here, saving duplications in each command;
-          begin
-            run s3, bucket, key, file, args
-          rescue AWS::S3::Errors::AccessDenied
-            raise FailureFeedback.new("Access Denied")
-          rescue AWS::S3::Errors::NoSuchBucket
-            raise FailureFeedback.new("There's no bucket named `#{bucket}'")
-          rescue AWS::S3::Errors::NoSuchKey
-            raise FailureFeedback.new("There's no key named `#{key}' in the bucket `#{bucket}'")
-          rescue AWS::S3::Errors::Base => exc
-            raise FailureFeedback.new("Error: `#{exc.message}'")
-          end
-        }
-      end
-
+      # Boom! Execute it
       cmd.parse
     end
 
