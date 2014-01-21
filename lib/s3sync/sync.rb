@@ -111,6 +111,16 @@ module S3Sync
 
     def list_files
       nodes = {}
+
+      # Create the directory if it does not exist
+      if not File.exists?(@source)
+        FileUtils.mkdir_p(@source)
+        return nodes
+      end
+
+      # The path declared in `@source` exists, yay! Now we need read
+      # the whole directory and add all the readable files to the
+      # `nodes` hash.
       Find.find(@source) do |file|
         begin
           st = File.stat file        # Might fail
