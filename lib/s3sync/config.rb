@@ -74,7 +74,7 @@ module S3Sync
 
     def read_from_env
       REQUIRED_VARS.each do |v|
-        self[v] = ENV[v.to_s] unless ENV[v.to_s].nil?
+        self[v.to_s] = ENV[v.to_s] unless ENV[v.to_s].nil?
       end
     end
 
