@@ -154,4 +154,31 @@ describe "Comparing file lists" do
     to_be_added_to_list2.should be_eql [Node.new("", "file2", 12), Node.new("", "file3", 12)]
     to_be_removed_from_list2.should be_eql [Node.new("", "file4", 22)]
   end
+
+  it 'can compare small files with an extra comparator' do
+    large_file_size = S3Sync::Node::SMALL_FILE + 1024
+    # Given that I have two lists of Nodes to compare
+    hash1 = {
+      "file1" => Node.new("", "file1", 10, -> { 'same' }),
+      "file2" => Node.new("", "file2", 22, -> { 'abc' }),
+      "file3" => Node.new("", "file3", 12, -> { fail }),
+      "file5" => Node.new("", "file5", large_file_size, -> { 'abc' }),
+    }
+
+    hash2 = {
+      "file1" => Node.new("", "file1", 10, -> { 'same' }),
+      "file2" => Node.new("", "file2", 22, -> { 'def' }),
+      "file4" => Node.new("", "file4", 22, -> { fail }),
+      "file5" => Node.new("", "file5", large_file_size, -> { 'def' }),
+    }
+
+    # When I compare those two file lists
+    same_in_both, to_be_added_to_list2, to_be_removed_from_list2 = SyncCommand.cmp hash1, hash2
+
+    # Then I see that the three lists that I requested were returned with the
+    # right content
+    same_in_both.should == [Node.new("", "file1", 10), Node.new('', 'file5', large_file_size)]
+    to_be_added_to_list2.should be_eql [Node.new("", "file2", 22), Node.new("", "file3", 12)]
+    to_be_removed_from_list2.should be_eql [Node.new("", "file4", 22)]
+  end
 end

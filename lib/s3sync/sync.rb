@@ -71,14 +71,18 @@ module S3Sync
   class Node
     include Comparable
 
+    SMALL_FILE = 50 * 1024 # 50.kilobytes
+
     attr_accessor :base
     attr_accessor :path
     attr_accessor :size
+    attr_accessor :small_comparator
 
-    def initialize base, path, size
+    def initialize base, path, size, small_comparator = nil
       @base = base
       @path = path
       @size = size
+      @small_comparator = small_comparator
     end
 
     def full
@@ -86,20 +90,21 @@ module S3Sync
     end
 
     def == other
-      full == other.full and @size == other.size
-    end
-
-    def <=> other
-      if self.size < other.size
-        -1
-      elsif self.size > other.size
-        1
-      else
-        0
-      end
+      @size == other.size && compare_small_comparators(other)
     end
 
     alias eql? ==
+
+    private
+
+    # If files are small and both nodes have a comparator, we can call an extra
+    # provided block to verify equality. This allows
+    def compare_small_comparators(other)
+      return true if @size > SMALL_FILE || other.size > SMALL_FILE
+      return true if small_comparator.nil? || other.small_comparator.nil?
+
+      small_comparator.call == other.small_comparator.call
+    end
   end
 
   class LocalDirectory
@@ -136,7 +141,8 @@ module S3Sync
 
         # We only need the relative path here
         file_name = file.gsub(/^#{@source}\/?/, '').squeeze('/')
-        node = Node.new(@source.squeeze('/'), file_name, st.size)
+        small_comparator = lambda { Digest::MD5.hexdigest File.read(file) }
+        node = Node.new(@source.squeeze('/'), file_name, st.size, small_comparator)
         nodes[node.path] = node
       end
 
@@ -153,7 +159,7 @@ module S3Sync
         value2 = hash2.delete key
         if value2.nil?
           to_add_to_2 << value
-        elsif value2.size == value.size
+        elsif value2 == value
           same << value
         else
           to_add_to_2 << value
@@ -297,7 +303,9 @@ module S3Sync
 
       nodes = {}
       @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect do |obj|
-        node = Node.new(location.path, obj.key, obj.content_length)
+        # etag comes back with quotes (obj.etag.inspcet # => "\"abc...def\""
+        small_comparator = lambda { obj.etag[/[a-z0-9]+/] }
+        node = Node.new(location.path, obj.key, obj.content_length, small_comparator)
         nodes[node.path] = node
       end
       return nodes
