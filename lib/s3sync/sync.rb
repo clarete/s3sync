@@ -306,7 +306,9 @@ module S3Sync
         # etag comes back with quotes (obj.etag.inspcet # => "\"abc...def\""
         small_comparator = lambda { obj.etag[/[a-z0-9]+/] }
         node = Node.new(location.path, obj.key, obj.content_length, small_comparator)
-        nodes[node.path] = node
+        # The key is relative path from dir.
+        key = node.path[(dir || "").length,node.path.length - 1]
+        nodes[key] = node
       end
       return nodes
     end
