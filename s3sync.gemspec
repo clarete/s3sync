@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
 
   # Library requirements
   spec.add_dependency "aws-sdk"
-  spec.add_dependency "cmdparse"
+  spec.add_dependency "cmdparse", '2.0.5'
 
   # Development requirements
   spec.add_development_dependency "simplecov"
