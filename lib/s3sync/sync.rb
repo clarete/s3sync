@@ -314,6 +314,9 @@ module S3Sync
     def read_trees source, destination
       if source.local?
         source_tree = LocalDirectory.new(source.path).list_files
+        source_tree = source_tree.reduce({}) do |a,(_,v)|
+          key = S3Sync.safe_join([destination.path, v.path]); a[key] = v; a
+        end
         destination_tree = read_tree_remote destination
       else
         source_tree = read_tree_remote source
