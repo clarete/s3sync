@@ -13,13 +13,14 @@ Gem::Specification.new do |spec|
 
   spec.homepage      = "https://github.com/clarete/s3sync"
   spec.license       = "MIT"
+  spec.required_ruby_version = '~>2'
 
   spec.files         = `git ls-files lib bin`.split($/)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
 
   # Library requirements
-  spec.add_dependency "aws-sdk", "< 2.0"
-  spec.add_dependency "cmdparse", "~> 2.0"
+  spec.add_dependency "aws-sdk", "< 2.2"
+  spec.add_dependency "cmdparse", "~> 3.0"
 
   # Development requirements
   spec.add_development_dependency "simplecov"
