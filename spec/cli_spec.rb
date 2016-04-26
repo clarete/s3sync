@@ -17,7 +17,7 @@ describe "S3 Client" do
     expect {
       # When I execute it with a mocked s3 instance
       command.run(s3, nil, nil, nil, nil)
-    }.to match_stdout('b1\nb2\n')
+    }.to output("b1\nb2\n").to_stdout
   end
 
   it "Should be able to create buckets" do

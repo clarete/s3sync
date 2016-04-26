@@ -25,7 +25,7 @@
 require 's3sync/version'
 require 's3sync/exceptions'
 require 's3sync/sync'
-require 'aws/s3'
+require 'aws-sdk'
 require 'cmdparse'
 
 
@@ -63,9 +63,9 @@ module S3Sync
         u.join ''
       end
 
-      def execute(args)
+      def execute(*args)
         # Connecting to amazon
-        s3 = AWS::S3.new
+        s3 = AWS::S3::Client.new
 
         # From the command line
         key, file = args
@@ -101,7 +101,7 @@ module S3Sync
 
     class ListBuckets < BaseCmd
       def initialize
-        super 'listbuckets', false, false, false
+        super 'listbuckets', takes_commands: false #, false, false
 
         @short_desc = "List all available buckets for your user"
       end
@@ -117,11 +117,11 @@ module S3Sync
       attr_accessor :acl
 
       def initialize
-        super 'createbucket', false, false
+        super 'createbucket', takes_commands: false #, false
 
         @short_desc = "Create a new bucket under your user account"
 
-        self.options = CmdParse::OptionParserWrapper.new do |opt|
+        self.options do |opt|
           parse_acl(opt)
         end
       end
@@ -147,13 +147,13 @@ module S3Sync
       attr_accessor :force
 
       def initialize
-        super 'deletebucket', false, false
+        super 'deletebucket', takes_commands: false #, false
 
         @short_desc = "Remove a bucket from your account"
 
         @force = false
 
-        self.options = CmdParse::OptionParserWrapper.new do |opt|
+        self.options do |opt|
           opt.on("-f", "--force", "Clean the bucket then deletes it") {|f|
             @force = f
           }
@@ -179,7 +179,7 @@ module S3Sync
       attr_accessor :max_entries
 
       def initialize
-        super 'list', false, false
+        super 'list', takes_commands: false #, false
 
         @short_desc = "List items filed under a given bucket"
 
@@ -189,7 +189,7 @@ module S3Sync
 
         @has_prefix = true
 
-        self.options = CmdParse::OptionParserWrapper.new do |opt|
+        self.options do |opt|
           opt.on("-m", "--max-entries=NUM", "Limit the number of entries to output") {|m|
             @max_entries = m
           }
@@ -223,7 +223,7 @@ module S3Sync
 
     class Delete < BaseCmd
       def initialize
-        super 'delete', false, false
+        super 'delete', takes_commands: false #, false
 
         @short_desc = "Delete a key from a bucket"
 
@@ -242,7 +242,7 @@ module S3Sync
       attr_accessor :secure
 
       def initialize
-        super 'url', false, false
+        super 'url', takes_commands: false #, false
 
         @short_desc = "Generates public urls or authenticated endpoints for the object"
         @description = "Notice that --method and --public are mutually exclusive"
@@ -252,7 +252,7 @@ module S3Sync
         @expires_in = false
         @has_prefix = 'required'
 
-        self.options = CmdParse::OptionParserWrapper.new do |opt|
+        self.options do |opt|
           opt.on("-m", "--method=METHOD", "Options: #{AVAILABLE_METHODS.join ', '}") {|m|
             @method = m
           }
@@ -305,7 +305,7 @@ module S3Sync
 
     class Put < BaseCmd
       def initialize
-        super 'put', false, false
+        super 'put', takes_commands: false #, false
 
         @short_desc = 'Upload a file to a bucket under a certain prefix'
         @has_prefix = true
@@ -326,7 +326,7 @@ module S3Sync
 
     class Get < BaseCmd
       def initialize
-        super 'get', false, false
+        super 'get', takes_commands: false #, false
         @short_desc = "Retrieve an object and save to the specified file"
         @has_prefix = 'required'
       end
@@ -359,7 +359,7 @@ module S3Sync
       attr_accessor :acl
 
       def initialize
-        super 'sync', false, false
+        super 'sync', takes_commands: false #, false
 
         @short_desc = "Synchronize an S3 and a local folder"
         @s3 = nil
@@ -368,7 +368,7 @@ module S3Sync
         @dry_run = false
         @verbose = false
 
-        self.options = CmdParse::OptionParserWrapper.new do |opt|
+        self.options do |opt|
           opt.on("-x EXPR", "--exclude=EXPR", "Skip copying files that matches this pattern. (Ruby REs)") {|v|
             @exclude = v
           }
@@ -425,22 +425,16 @@ END
     end
 
     def run conf
-      cmd = CmdParse::CommandParser.new true
-      cmd.program_name = File.basename $0
-      cmd.program_version = S3Sync::VERSION
+      cmd = CmdParse::CommandParser.new handle_exceptions: true
+      cmd.main_options do |opt|
+        opt.program_name = File.basename $0
+        opt.version = S3Sync::VERSION
+      end
 
-      cmd.options = CmdParse::OptionParserWrapper.new do |opt|
+      cmd.global_options do |opt|
         opt.separator "Global options:"
       end
 
-      cmd.main_command.short_desc = 'Tool belt for managing your S3 buckets'
-      cmd.main_command.description =<<END.strip
-S3Sync provides a list of commands that will allow you to manage your content
-stored in S3 buckets. To learn about each feature, please use the `help`
-command:
-
-    $ #{File.basename $0} help sync"
-END
       # Commands used more often
       cmd.add_command List.new
       cmd.add_command Delete.new
