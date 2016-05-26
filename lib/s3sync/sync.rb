@@ -172,6 +172,7 @@ module S3Sync
     end
 
     def initialize args, source, destination
+      # @args.s3 should be of type Aws::S3::Resource
       @args = args
       @source = source
       @destination = destination
@@ -302,13 +303,12 @@ module S3Sync
       dir += '/' if not dir.empty? and not dir.end_with?('/')
 
       nodes = {}
-      @args.s3.buckets[location.bucket].objects.with_prefix(dir || "").to_a.collect do |obj|
+
+      @args.s3.bucket(location.bucket).objects(prefix: (dir || "")).to_a.collect do |obj|
         # etag comes back with quotes (obj.etag.inspcet # => "\"abc...def\""
         small_comparator = lambda { obj.etag[/[a-z0-9]+/] }
         node = Node.new(location.path, obj.key, obj.content_length, small_comparator)
-        # The key is relative path from dir.
-        key = node.path[(dir || "").length,node.path.length - 1]
-        nodes[key] = node
+        nodes[node.path] = node
       end
       return nodes
     end
@@ -336,7 +336,7 @@ module S3Sync
 
         unless @args.dry_run
           remote_path = "#{remote.path}#{e.path}"
-          @args.s3.buckets[remote.bucket].objects[remote_path].write Pathname.new(e.full), :acl => @args.acl
+          @args.s3.bucket(remote.bucket).object(remote_path).upload_file(Pathname.new(e.full))
         end
       end
     end
@@ -349,7 +349,9 @@ module S3Sync
       end
 
       unless @args.dry_run
-        @args.s3.buckets[remote.bucket].objects.delete_if { |obj| list.map(&:path).include? obj.key }
+        list.map(&:path).each do |object_key|
+          @args.s3.bucket(remote.bucket).object(object_key).delete
+        end
       end
     end
 
@@ -363,7 +365,7 @@ module S3Sync
         end
 
         unless @args.dry_run
-          obj = @args.s3.buckets[source.bucket].objects[e.path]
+          obj = @args.s3.bucket(source.bucket).object(e.path)
 
           # Making sure this new file will have a safe shelter
           FileUtils.mkdir_p File.dirname(path)
