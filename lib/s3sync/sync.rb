@@ -308,7 +308,9 @@ module S3Sync
         # etag comes back with quotes (obj.etag.inspcet # => "\"abc...def\""
         small_comparator = lambda { obj.etag[/[a-z0-9]+/] }
         node = Node.new(location.path, obj.key, obj.content_length, small_comparator)
-        nodes[node.path] = node
+        # The key is relative path from dir.
+        key = node.path[(dir || "").length,node.path.length - 1]
+        nodes[key] = node
       end
       return nodes
     end
@@ -316,9 +318,6 @@ module S3Sync
     def read_trees source, destination
       if source.local?
         source_tree = LocalDirectory.new(source.path).list_files
-        source_tree = source_tree.reduce({}) do |a,(_,v)|
-          key = S3Sync.safe_join([destination.path, v.path]); a[key] = v; a
-        end
         destination_tree = read_tree_remote destination
       else
         source_tree = read_tree_remote source
@@ -331,12 +330,12 @@ module S3Sync
     def upload_files remote, list
       list.each do |e|
         if @args.verbose
-          puts " + #{e.full} => #{remote}#{e.path}"
+          puts " + #{e.full} => #{remote.path}#{e.path}"
         end
 
         unless @args.dry_run
           remote_path = "#{remote.path}#{e.path}"
-          @args.s3.bucket(remote.bucket).object(remote_path).upload_file(Pathname.new(e.full))
+          @args.s3.bucket(remote.bucket).object(remote_path).upload_file(Pathname.new(e.full), acl: @args.acl)
         end
       end
     end
@@ -361,7 +360,7 @@ module S3Sync
         path = File.join destination.path, e.path
 
         if @args.verbose
-          puts " + #{source}#{e.path} => #{path}"
+          puts " + #{source.bucket}:#{e.path} => #{path}"
         end
 
         unless @args.dry_run
@@ -378,14 +377,10 @@ module S3Sync
           else
             # Downloading and saving the files
             File.open(path, 'wb') do |file|
-              begin
-                obj.read do |chunk|
-                  file.write chunk
-                end
-              rescue AWS::Core::Http::NetHttpHandler::TruncatedBodyError => e
-                $stderr.puts "WARNING: (retryable) TruncatedBodyError occured, retrying in a second #{file.basename}"
-                sleep 1
-                retry
+              # By default Aws::S3::Client will retry 3 times if there is a network error.
+              # To increase this number or disable it, set :retry_limit when instantiating the S3 client.
+              obj.get do |chunk|
+                file.write chunk
               end
             end
           end
