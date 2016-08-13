@@ -65,7 +65,7 @@ module S3Sync
 
       def execute(*args)
         # Connecting to amazon
-        s3 = AWS::S3::Client.new
+        s3 = Aws::S3::Resource.new(client: Aws::S3::Client.new)
 
         # From the command line
         key, file = args
@@ -78,13 +78,13 @@ module S3Sync
         # of the common errors here, saving duplications in each command;
         begin
           run s3, bucket, key, file, args
-        rescue AWS::S3::Errors::AccessDenied
-          raise FailureFeedback.new("Access Denied")
-        rescue AWS::S3::Errors::NoSuchBucket
+        rescue Aws::S3::Errors::SignatureDoesNotMatch, Aws::S3::Errors::InvalidAccessKeyId => e
+          raise FailureFeedback.new("Access Denied: #{e.message}")
+        rescue Aws::S3::Errors::NoSuchBucket
           raise FailureFeedback.new("There's no bucket named `#{bucket}'")
-        rescue AWS::S3::Errors::NoSuchKey
+        rescue Aws::S3::Errors::NoSuchKey
           raise FailureFeedback.new("There's no key named `#{key}' in the bucket `#{bucket}'")
-        rescue AWS::S3::Errors::Base => exc
+        rescue Aws::S3::Errors::ServiceError => exc
           raise FailureFeedback.new("Error: `#{exc.message}'")
         end
       end
@@ -136,8 +136,8 @@ module S3Sync
             params.merge!({:acl => @acl})
           end
 
-          s3.buckets.create bucket, params
-        rescue AWS::S3::Errors::BucketAlreadyExists
+          s3.client.create_bucket(params.merge(bucket: bucket))
+        rescue Aws::S3::Errors::BucketAlreadyExists
           raise FailureFeedback.new("Bucket `#{bucket}' already exists")
         end
       end
@@ -164,7 +164,7 @@ module S3Sync
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket
 
         # Getting the bucket
-        bucket_obj = s3.buckets[bucket]
+        bucket_obj = s3.bucket(bucket)
 
         # Do not kill buckets with content unless explicitly asked
         if not @force and bucket_obj.objects.count > 0
@@ -203,7 +203,7 @@ module S3Sync
       def run s3, bucket, key, file, args
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket
 
-        collection = s3.buckets[bucket].objects.with_prefix(key || "")
+        collection = s3.bucket(bucket).objects( prefix: (key || "") )
 
         if @max_entries > 0
           collection = collection.page(:per_page => @max_entries)
@@ -233,7 +233,7 @@ module S3Sync
       def run s3, bucket, key, file, args
         raise WrongUsage.new(nil, "You need to inform a bucket") if not bucket
         raise WrongUsage.new(nil, "You need to inform a key") if not key
-        s3.buckets[bucket].objects[key].delete
+        s3.buckets(bucket).object(key).delete
       end
     end
 
@@ -295,10 +295,10 @@ module S3Sync
         opts.merge!({:secure => @secure})
 
         if @public
-          puts s3.buckets[bucket].objects[key].public_url(opts).to_s
+          puts s3.bucket(bucket).object(key).public_url(opts).to_s
         else
           opts.merge!({:expires => @expires_in}) if @expires_in
-          puts s3.buckets[bucket].objects[key].url_for(method.to_sym, opts).to_s
+          puts s3.bucket(bucket).object(key).presigned_url(method.to_sym, opts).to_s
         end
       end
     end
@@ -320,7 +320,7 @@ module S3Sync
         raise WrongUsage.new(nil, "You need to inform a file") if not file
 
         name = S3Sync.safe_join [key, File.basename(file)]
-        s3.buckets[bucket].objects[name].write Pathname.new(file)
+        s3.bucket(bucket).object(name).upload_file(Pathname.new(file))
       end
     end
 
@@ -345,7 +345,7 @@ module S3Sync
         path = File.absolute_path file
         path = S3Sync.safe_join [path, File.basename(key)] if File.directory? path
         File.open(path, 'wb') do |f|
-          s3.buckets[bucket].objects[key].read do |chunk| f.write(chunk) end
+          s3.bucket(bucket).object(key).get do |chunk| f.write(chunk) end
         end
       end
     end

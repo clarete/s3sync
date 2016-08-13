@@ -43,7 +43,7 @@ module S3Sync
 
   class Config < Hash
 
-    REQUIRED_VARS = [:AWS_ACCESS_KEY_ID, :AWS_SECRET_ACCESS_KEY]
+    REQUIRED_VARS = [:AWS_ACCESS_KEY_ID, :AWS_SECRET_ACCESS_KEY, :AWS_REGION]
 
     CONFIG_PATHS = ["#{ENV['S3SYNC_PATH']}", "#{ENV['HOME']}/.s3sync.yml", "/etc/s3sync.yml"]
 
