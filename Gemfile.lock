@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    s3sync (2.0.3)
+    s3sync (2.0.4)
       aws-sdk (~> 2.3.0)
       cmdparse (~> 3.0)
 
